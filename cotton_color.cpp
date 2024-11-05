@@ -54,6 +54,11 @@ void vibrantColorDetection(const Mat& inputImage, Mat& outputImage, const map<st
 }
 
 
+void blackColorDetection(const Mat& inputImage, Mat& outputImage, const map<string, int>& params)
+{
+    outputImage = Mat::zeros(inputImage.size(), CV_8UC1);
+}
+
 string openFileDialog() {
     // 初始化文件选择对话框
     OPENFILENAME ofn;       // 文件对话框结构
