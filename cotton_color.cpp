@@ -2,6 +2,8 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <windows.h>
+#include <commdlg.h>  // 包含文件对话框相关的函数
 
 
 using namespace cv;
@@ -52,12 +54,64 @@ void vibrantColorDetection(const Mat& inputImage, Mat& outputImage, const map<st
 }
 
 
+string openFileDialog() {
+    // 初始化文件选择对话框
+    OPENFILENAME ofn;       // 文件对话框结构
+    wchar_t szFile[260];    // 存储选择的文件路径
+
+    // 设置 OPENFILENAME 结构的默认值
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFile = szFile;
+    ofn.nMaxFile = sizeof(szFile) / sizeof(szFile[0]);
+    ofn.lpstrFilter = L"Image Files\0*.BMP;*.JPG;*.JPEG;*.PNG;*.GIF\0All Files\0*.*\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.lpstrTitle = L"Select an image file";
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+    // 打开文件选择对话框
+    if (GetOpenFileName(&ofn) == TRUE) {
+        // 将 wchar_t 转换为 string
+        wstring ws(szFile);
+        string filePath(ws.begin(), ws.end());
+        return filePath;
+    }
+
+    return "";  // 如果用户取消，返回空字符串
+}
+
+
+Mat readImage() {
+    // 读取输入图像
+    string imagePath = openFileDialog();
+
+    if (imagePath.empty()) {
+        cout << "No file selected or user cancelled." << endl;
+        return Mat();
+    }
+
+    // 使用 OpenCV 读取选中的图片
+    Mat image = imread(imagePath);
+
+    if (image.empty()) {
+        cout << "Error: Could not load image." << endl;
+        return Mat();
+    }
+
+    return image;
+}
+
+
 int main() {
     // 读取输入图像
-    Mat inputImage = imread("C:\\Program Files\\Matrox Imaging\\Images\\test.bmp");
+	Mat inputImage = readImage();
 
     if (inputImage.empty()) {
-        cout << "Error: Could not load image!" << endl;
+        cout << "Error: Could not load image." << endl;
         return -1;
     }
 
