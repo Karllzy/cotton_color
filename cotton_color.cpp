@@ -85,6 +85,7 @@ string openFileDialog() {
 }
 
 
+void test() {}
 Mat readImage() {
     // 读取输入图像
     string imagePath = openFileDialog();
