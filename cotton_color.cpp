@@ -52,33 +52,7 @@ void vibrantColorDetection(const Mat& inputImage, Mat& outputImage, const map<st
     // 对饱和度图像应用阈值处理
     threshold(saturation, outputImage, saturationThreshold, 255, THRESH_BINARY);
 }
-void vibrantGreenDetection(const Mat& inputImage, Mat& outputImage, const map<string, int>& params) {
-    // 从参数映射中获取饱和度阈值
-    int green = params.at("green");
 
-    // 将输入图像从 BGR 转换为 HSV
-    Mat lab_image;
-    cvtColor(inputImage, lab_image, cv::COLOR_BGR2Lab);
-
-    // 定义偏绿色的Lab范围（具体值可能需要调整）  
-    Scalar lower_green_lab(101, 101, 95);
-    Scalar upper_green_lab(135, 120, green);
-
-    // 创建掩膜  
-    Mat mask_lab;
-    inRange(lab_image, lower_green_lab, upper_green_lab, mask_lab);
-
-    // 通过掩膜提取偏绿色部分  
-    Mat masked_image_lab;
-    bitwise_and(inputImage, inputImage, masked_image_lab, mask_lab);
-
-    // 显示结果  
-    imshow("Original Image", inputImage);
-    imshow("Mask Lab", mask_lab);
-    //cv::imshow("Masked Image Lab", masked_image_lab);
-    waitKey(0);
-    destroyAllWindows();
-}
 
 void blackColorDetection(const Mat& inputImage, Mat& outputImage, const map<string, int>& params)
 {
@@ -116,7 +90,7 @@ string openFileDialog() {
 }
 
 
-
+void test() {}
 Mat readImage() {
     // 读取输入图像
     string imagePath = openFileDialog();
@@ -140,7 +114,7 @@ Mat readImage() {
 
 int main() {
     // 读取输入图像
-    Mat inputImage = readImage();
+	Mat inputImage = readImage();
 
     if (inputImage.empty()) {
         cout << "Error: Could not load image." << endl;
@@ -152,10 +126,10 @@ int main() {
 
     // 使用 map 模拟 JSON 参数传递
     map<string, int> params;
-    params["green"] =134;  // 设置饱和度阈值为100
+    params["saturationThreshold"] = 100;  // 设置饱和度阈值为100
 
     // 调用鲜艳颜色检测函数
-    vibrantGreenDetection(inputImage, outputImage, params);
+    vibrantColorDetection(inputImage, outputImage, params);
 
     // 显示原图和检测到的鲜艳区域
     imshow("Original Image", inputImage);
@@ -165,4 +139,3 @@ int main() {
     waitKey(0);
     return 0;
 }
-
