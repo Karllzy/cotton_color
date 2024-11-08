@@ -5,32 +5,35 @@
 #include <windows.h>
 #include <commdlg.h>  // 包含文件对话框相关的函数
 
-
 using namespace cv;
 using namespace std;
 
-
 /**
- * @brief 鲜艳色彩检测函数，通过饱和度阈值检测输入图像中鲜艳的颜色区域。
- *
- * 此函数将输入图像从 BGR 色彩空间转换到 HSV 色彩空间，并提取出饱和度 (S) 通道。然后，通过设置饱和度阈值，
- * 来检测图像中饱和度大于阈值的区域，标记为输出图像的鲜艳颜色区域。
+ * @brief 鲜艳绿色检测函数，通过指定的 Lab 色彩范围检测输入图像中的绿色区域。
  *
  * @param inputImage 输入图像，类型为 cv::Mat，要求为 BGR 色彩空间。
- * @param outputImage 输出图像，类型为 cv::Mat，输出图像将标记出鲜艳颜色区域，原始图像尺寸。
- * @param saturationThreshold 饱和度阈值，类型为 int，用于过滤低饱和度的区域，范围通常为 0 到 255。
- *                            饱和度高于此阈值的区域将被认为是鲜艳的颜色。
- *
- * @note 饱和度阈值越高，输出图像将只保留更为鲜艳的区域。
- *       若饱和度阈值过低，可能会检测到过多的区域。
+ * @param outputImage 输出图像，类型为 cv::Mat，输出图像将包含检测到的绿色区域。
+ * @param params 参数映射，用于传递各种可配置的参数，如绿色阈值等。
  */
- /**
-  * @brief 鲜艳色彩检测函数，通过饱和度阈值检测输入图像中鲜艳的颜色区域。
-  *
-  * @param inputImage 输入图像，类型为 cv::Mat，要求为 BGR 色彩空间。
-  * @param outputImage 输出图像，类型为 cv::Mat，输出图像将标记出鲜艳颜色区域，原始图像尺寸。
-  * @param params 参数映射，用于传递各种可配置的参数，如饱和度阈值等。
-  */
+void vibrantGreenDetection(const Mat& inputImage, Mat& outputImage, const map<string, int>& params) {
+    // 从参数映射中获取绿色阈值
+    int green = params.at("green");
+
+    // 将输入图像从 BGR 转换为 Lab
+    Mat lab_image;
+    cvtColor(inputImage, lab_image, cv::COLOR_BGR2Lab);
+
+    // 定义偏绿色的 Lab 范围（具体值可能需要调整）
+    Scalar lower_green_lab(101, 101, 95);
+    Scalar upper_green_lab(135, 120, green);
+
+    // 创建掩膜
+    Mat mask_lab;
+    inRange(lab_image, lower_green_lab, upper_green_lab, mask_lab);
+
+    // 通过掩膜提取偏绿色部分，将结果存储在 outputImage 中
+    bitwise_and(inputImage, inputImage, outputImage, mask_lab);
+}
 void vibrantColorDetection(const Mat& inputImage, Mat& outputImage, const map<string, int>& params) {
     // 从参数映射中获取饱和度阈值
     int saturationThreshold = params.at("saturationThreshold");
@@ -52,13 +55,6 @@ void vibrantColorDetection(const Mat& inputImage, Mat& outputImage, const map<st
     // 对饱和度图像应用阈值处理
     threshold(saturation, outputImage, saturationThreshold, 255, THRESH_BINARY);
 }
-
-
-void blackColorDetection(const Mat& inputImage, Mat& outputImage, const map<string, int>& params)
-{
-    outputImage = Mat::zeros(inputImage.size(), CV_8UC1);
-}
-
 string openFileDialog() {
     // 初始化文件选择对话框
     OPENFILENAME ofn;       // 文件对话框结构
@@ -89,8 +85,6 @@ string openFileDialog() {
     return "";  // 如果用户取消，返回空字符串
 }
 
-
-void test() {}
 Mat readImage() {
     // 读取输入图像
     string imagePath = openFileDialog();
@@ -111,10 +105,22 @@ Mat readImage() {
     return image;
 }
 
+// 辅助函数，用于调整图像大小并显示，支持等比例放大
+void showImage(const string& windowName, const Mat& img, double scaleFactor = 1.0) {
+    Mat resizedImg;
+    int newWidth = static_cast<int>(img.cols * scaleFactor);
+    int newHeight = static_cast<int>(img.rows * scaleFactor);
+
+    // 调整图像大小
+    resize(img, resizedImg, Size(newWidth, newHeight));
+
+    // 显示图像
+    imshow(windowName, resizedImg);
+}
 
 int main() {
     // 读取输入图像
-	Mat inputImage = readImage();
+    Mat inputImage = readImage();
 
     if (inputImage.empty()) {
         cout << "Error: Could not load image." << endl;
@@ -126,14 +132,17 @@ int main() {
 
     // 使用 map 模拟 JSON 参数传递
     map<string, int> params;
-    params["saturationThreshold"] = 100;  // 设置饱和度阈值为100
+    params["green"] = 134;  // 设置绿色阈值
 
-    // 调用鲜艳颜色检测函数
-    vibrantColorDetection(inputImage, outputImage, params);
+    // 调用鲜艳绿色检测函数
+    vibrantGreenDetection(inputImage, outputImage, params);
 
-    // 显示原图和检测到的鲜艳区域
-    imshow("Original Image", inputImage);
-    imshow("Detected Vibrant Colors", outputImage);
+    // 定义缩放因子，1.0 表示原始大小，>1.0 表示放大，<1.0 表示缩小
+    double scaleFactor = 1.5;  // 将图像放大1.5倍
+
+    // 显示原图和检测到的绿色区域，使用缩放因子
+    showImage("Original Image", inputImage, scaleFactor);
+    showImage("Detected Vibrant Green", outputImage, scaleFactor);
 
     // 等待用户按键
     waitKey(0);
