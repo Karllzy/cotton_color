@@ -3,79 +3,79 @@
 #include <map>
 #include <string>
 #include <windows.h>
-#include <commdlg.h>  // °üº¬ÎÄ¼ş¶Ô»°¿òÏà¹ØµÄº¯Êı
+#include <commdlg.h>  // åŒ…å«æ–‡ä»¶å¯¹è¯æ¡†ç›¸å…³çš„å‡½æ•°
 
 using namespace cv;
 using namespace std;
 
 /**
- * @brief ÏÊÑŞÉ«²Ê¼ì²âº¯Êı£¬Í¨¹ı±¥ºÍ¶ÈãĞÖµ¼ì²âÊäÈëÍ¼ÏñÖĞÏÊÑŞµÄÑÕÉ«ÇøÓò¡£
+ * @brief é²œè‰³è‰²å½©æ£€æµ‹å‡½æ•°ï¼Œé€šè¿‡é¥±å’Œåº¦é˜ˆå€¼æ£€æµ‹è¾“å…¥å›¾åƒä¸­é²œè‰³çš„é¢œè‰²åŒºåŸŸã€‚
  *
- * @param inputImage ÊäÈëÍ¼Ïñ£¬ÀàĞÍÎª cv::Mat£¬ÒªÇóÎª BGR É«²Ê¿Õ¼ä¡£
- * @param outputImage Êä³öÍ¼Ïñ£¬ÀàĞÍÎª cv::Mat£¬Êä³öÍ¼Ïñ½«±ê¼Ç³öÏÊÑŞÑÕÉ«ÇøÓò£¬Ô­Ê¼Í¼Ïñ³ß´ç¡£
- * @param params ²ÎÊıÓ³Éä£¬ÓÃÓÚ´«µİ¸÷ÖÖ¿ÉÅäÖÃµÄ²ÎÊı£¬Èç±¥ºÍ¶ÈãĞÖµµÈ¡£
+ * @param inputImage è¾“å…¥å›¾åƒï¼Œç±»å‹ä¸º cv::Matï¼Œè¦æ±‚ä¸º BGR è‰²å½©ç©ºé—´ã€‚
+ * @param outputImage è¾“å‡ºå›¾åƒï¼Œç±»å‹ä¸º cv::Matï¼Œè¾“å‡ºå›¾åƒå°†æ ‡è®°å‡ºé²œè‰³é¢œè‰²åŒºåŸŸï¼ŒåŸå§‹å›¾åƒå°ºå¯¸ã€‚
+ * @param params å‚æ•°æ˜ å°„ï¼Œç”¨äºä¼ é€’å„ç§å¯é…ç½®çš„å‚æ•°ï¼Œå¦‚é¥±å’Œåº¦é˜ˆå€¼ç­‰ã€‚
  */
 void vibrantColorDetection(const Mat& inputImage, Mat& outputImage, const map<string, int>& params) {
-    // ´Ó²ÎÊıÓ³ÉäÖĞ»ñÈ¡±¥ºÍ¶ÈãĞÖµ
+    // ä»å‚æ•°æ˜ å°„ä¸­è·å–é¥±å’Œåº¦é˜ˆå€¼
     int saturationThreshold = params.at("saturationThreshold");
 
-    // ½«ÊäÈëÍ¼Ïñ´Ó BGR ×ª»»Îª HSV
+    // å°†è¾“å…¥å›¾åƒä» BGR è½¬æ¢ä¸º HSV
     Mat hsvImage;
     cvtColor(inputImage, hsvImage, COLOR_BGR2HSV);
 
-    // ·ÖÀë HSV Í¼ÏñµÄ¸÷¸öÍ¨µÀ
+    // åˆ†ç¦» HSV å›¾åƒçš„å„ä¸ªé€šé“
     Mat channels[3];
     split(hsvImage, channels);
 
-    // »ñÈ¡±¥ºÍ¶ÈÍ¨µÀ (S)
+    // è·å–é¥±å’Œåº¦é€šé“ (S)
     Mat saturation = channels[1];
 
-    // ´´½¨Êä³öÍ¼Ïñ£¬½«±¥ºÍ¶È´óÓÚãĞÖµµÄÇøÓò±ê¼ÇÎªÔÓÖÊ
+    // åˆ›å»ºè¾“å‡ºå›¾åƒï¼Œå°†é¥±å’Œåº¦å¤§äºé˜ˆå€¼çš„åŒºåŸŸæ ‡è®°ä¸ºæ‚è´¨
     outputImage = Mat::zeros(inputImage.size(), CV_8UC1);
 
-    // ¶Ô±¥ºÍ¶ÈÍ¼ÏñÓ¦ÓÃãĞÖµ´¦Àí
+    // å¯¹é¥±å’Œåº¦å›¾åƒåº”ç”¨é˜ˆå€¼å¤„ç†
     threshold(saturation, outputImage, saturationThreshold, 255, THRESH_BINARY);
 }
 
 /**
- * @brief ´ò¿ªÎÄ¼ş¶Ô»°¿ò£¬·µ»ØÑ¡ÖĞÎÄ¼şµÄÂ·¾¶¡£
+ * @brief æ‰“å¼€æ–‡ä»¶å¯¹è¯æ¡†ï¼Œè¿”å›é€‰ä¸­æ–‡ä»¶çš„è·¯å¾„ã€‚
  *
- * @return Ñ¡ÖĞÎÄ¼şµÄÍêÕûÂ·¾¶£¬ÀàĞÍÎª std::wstring¡£Èç¹ûÓÃ»§È¡ÏûÑ¡Ôñ£¬·µ»Ø¿Õ×Ö·û´®¡£
+ * @return é€‰ä¸­æ–‡ä»¶çš„å®Œæ•´è·¯å¾„ï¼Œç±»å‹ä¸º std::wstringã€‚å¦‚æœç”¨æˆ·å–æ¶ˆé€‰æ‹©ï¼Œè¿”å›ç©ºå­—ç¬¦ä¸²ã€‚
  */
 std::wstring openFileDialog() {
-    // ³õÊ¼»¯ÎÄ¼şÑ¡Ôñ¶Ô»°¿ò
-    OPENFILENAMEW ofn;       // Ê¹ÓÃ¿í×Ö·û°æ±¾µÄ½á¹¹
-    wchar_t szFile[260] = {0};    // ´æ´¢Ñ¡ÔñµÄÎÄ¼şÂ·¾¶
+    // åˆå§‹åŒ–æ–‡ä»¶é€‰æ‹©å¯¹è¯æ¡†
+    OPENFILENAMEW ofn;       // ä½¿ç”¨å®½å­—ç¬¦ç‰ˆæœ¬çš„ç»“æ„
+    wchar_t szFile[260] = {0};    // å­˜å‚¨é€‰æ‹©çš„æ–‡ä»¶è·¯å¾„
 
-    // ÉèÖÃ OPENFILENAMEW ½á¹¹µÄÄ¬ÈÏÖµ
+    // è®¾ç½® OPENFILENAMEW ç»“æ„çš„é»˜è®¤å€¼
     ZeroMemory(&ofn, sizeof(ofn));
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = NULL;
-    ofn.lpstrFile = szFile;  // ÉèÖÃÎÄ¼şÂ·¾¶»º³åÇø
+    ofn.lpstrFile = szFile;  // è®¾ç½®æ–‡ä»¶è·¯å¾„ç¼“å†²åŒº
     ofn.nMaxFile = sizeof(szFile) / sizeof(szFile[0]);
     ofn.lpstrFilter = L"Image Files\0*.BMP;*.JPG;*.JPEG;*.PNG;*.GIF\0All Files\0*.*\0";
     ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;  // ²»ĞèÒªµ¥¶ÀµÄÎÄ¼şÃû
+    ofn.lpstrFileTitle = NULL;  // ä¸éœ€è¦å•ç‹¬çš„æ–‡ä»¶å
     ofn.nMaxFileTitle = 0;
-    ofn.lpstrInitialDir = NULL;  // Ê¹ÓÃÄ¬ÈÏ³õÊ¼Ä¿Â¼
-    ofn.lpstrTitle = L"Select an image file";  // ¶Ô»°¿ò±êÌâ
+    ofn.lpstrInitialDir = NULL;  // ä½¿ç”¨é»˜è®¤åˆå§‹ç›®å½•
+    ofn.lpstrTitle = L"Select an image file";  // å¯¹è¯æ¡†æ ‡é¢˜
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-    // ´ò¿ªÎÄ¼şÑ¡Ôñ¶Ô»°¿ò
+    // æ‰“å¼€æ–‡ä»¶é€‰æ‹©å¯¹è¯æ¡†
     if (GetOpenFileNameW(&ofn) == TRUE) {
-        return szFile;  // ·µ»ØÑ¡ÖĞµÄÎÄ¼şÂ·¾¶
+        return szFile;  // è¿”å›é€‰ä¸­çš„æ–‡ä»¶è·¯å¾„
     }
 
-    return L"";  // Èç¹ûÓÃ»§È¡Ïû£¬·µ»Ø¿Õ×Ö·û´®
+    return L"";  // å¦‚æœç”¨æˆ·å–æ¶ˆï¼Œè¿”å›ç©ºå­—ç¬¦ä¸²
 }
 
 /**
- * @brief ¶ÁÈ¡Í¼ÏñÎÄ¼ş£¬Ö§³Ö Unicode Â·¾¶¡£
+ * @brief è¯»å–å›¾åƒæ–‡ä»¶ï¼Œæ”¯æŒ Unicode è·¯å¾„ã€‚
  *
- * @return ¼ÓÔØµÄÍ¼Ïñ£¬ÀàĞÍÎª cv::Mat¡£Èç¹û¼ÓÔØÊ§°Ü£¬·µ»Ø¿ÕµÄ Mat¡£
+ * @return åŠ è½½çš„å›¾åƒï¼Œç±»å‹ä¸º cv::Matã€‚å¦‚æœåŠ è½½å¤±è´¥ï¼Œè¿”å›ç©ºçš„ Matã€‚
  */
 Mat readImage() {
-    // ¶ÁÈ¡ÊäÈëÍ¼ÏñÂ·¾¶
+    // è¯»å–è¾“å…¥å›¾åƒè·¯å¾„
     std::wstring imagePath = openFileDialog();
 
     if (imagePath.empty()) {
@@ -83,14 +83,14 @@ Mat readImage() {
         return Mat();
     }
 
-    // Ê¹ÓÃ Windows API ´ò¿ªÎÄ¼ş
+    // ä½¿ç”¨ Windows API æ‰“å¼€æ–‡ä»¶
     HANDLE hFile = CreateFileW(imagePath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) {
         wcout << L"Error: Could not open file." << endl;
         return Mat();
     }
 
-    // »ñÈ¡ÎÄ¼ş´óĞ¡
+    // è·å–æ–‡ä»¶å¤§å°
     LARGE_INTEGER fileSize;
     if (!GetFileSizeEx(hFile, &fileSize)) {
         wcout << L"Error: Could not get file size." << endl;
@@ -106,7 +106,7 @@ Mat readImage() {
 
     DWORD dwFileSize = static_cast<DWORD>(fileSize.QuadPart);
 
-    // ¶ÁÈ¡ÎÄ¼şÄÚÈİµ½»º³åÇø
+    // è¯»å–æ–‡ä»¶å†…å®¹åˆ°ç¼“å†²åŒº
     std::vector<BYTE> buffer(dwFileSize);
     DWORD bytesRead = 0;
     if (!ReadFile(hFile, buffer.data(), dwFileSize, &bytesRead, NULL) || bytesRead != dwFileSize) {
@@ -117,7 +117,7 @@ Mat readImage() {
 
     CloseHandle(hFile);
 
-    // Ê¹ÓÃ OpenCV ´ÓÄÚ´æ»º³åÇø¶ÁÈ¡Í¼Ïñ
+    // ä½¿ç”¨ OpenCV ä»å†…å­˜ç¼“å†²åŒºè¯»å–å›¾åƒ
     Mat image = imdecode(buffer, IMREAD_COLOR);
 
     if (image.empty()) {
@@ -129,7 +129,7 @@ Mat readImage() {
 }
 
 int main() {
-    // ¶ÁÈ¡ÊäÈëÍ¼Ïñ
+    // è¯»å–è¾“å…¥å›¾åƒ
     Mat inputImage = readImage();
 
     if (inputImage.empty()) {
@@ -137,21 +137,21 @@ int main() {
         return -1;
     }
 
-    // ´´½¨Êä³öÍ¼Ïñ
+    // åˆ›å»ºè¾“å‡ºå›¾åƒ
     Mat outputImage;
 
-    // Ê¹ÓÃ map Ä£Äâ²ÎÊı´«µİ
+    // ä½¿ç”¨ map æ¨¡æ‹Ÿå‚æ•°ä¼ é€’
     map<string, int> params;
-    params["saturationThreshold"] = 100;  // ÉèÖÃ±¥ºÍ¶ÈãĞÖµÎª 100
+    params["saturationThreshold"] = 100;  // è®¾ç½®é¥±å’Œåº¦é˜ˆå€¼ä¸º 100
 
-    // µ÷ÓÃÏÊÑŞÑÕÉ«¼ì²âº¯Êı
+    // è°ƒç”¨é²œè‰³é¢œè‰²æ£€æµ‹å‡½æ•°
     vibrantColorDetection(inputImage, outputImage, params);
 
-    // ÏÔÊ¾Ô­Í¼ºÍ¼ì²âµ½µÄÏÊÑŞÇøÓò
+    // æ˜¾ç¤ºåŸå›¾å’Œæ£€æµ‹åˆ°çš„é²œè‰³åŒºåŸŸ
     imshow("Original Image", inputImage);
     imshow("Detected Vibrant Colors", outputImage);
 
-    // µÈ´ıÓÃ»§°´¼ü
+    // ç­‰å¾…ç”¨æˆ·æŒ‰é”®
     waitKey(0);
     return 0;
 }
