@@ -5,7 +5,12 @@ project(cotton_color)
 set(CMAKE_CXX_STANDARD 17)
 
 # 设置 OpenCV 路径
-set(OpenCV_DIR "E:/opencv4.10/opencv/build")
+if(DEFINED ENV{OpenCV_DIR})
+    set(OpenCV_DIR ENV{OpenCV_DIR})
+    message(STATUS "OpenCV_DIR set from environment variable: ${OpenCV_DIR}")
+else()
+    message(FATAL_ERROR "OpenCV_DIR is not set. Please set the OpenCV_DIR environment variable.")
+endif()
 
 # 找到 OpenCV 包
 find_package(OpenCV REQUIRED)
