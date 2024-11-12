@@ -50,7 +50,7 @@ L a* b* 色彩空间检测，检测明黄色、白色。
 																					      |
 									保守方案											   -> 深度学习确认 -> 杂质
 
-讨论记录：
+#### 讨论记录：
 
 暗红色（棉叶）
 
@@ -60,3 +60,43 @@ L a* b* 色彩空间检测，检测明黄色、白色。
 
 土黄
 
+### 安装记录
+
+1. OpenCV安装
+
+下载OpenCV并设置OpenCV_DIR到环境变量，例如：
+
+在 Windows 上
+打开“控制面板” > “系统和安全” > “系统”。
+点击左侧的“高级系统设置”。
+在“系统属性”窗口中，点击“环境变量”。
+在“系统变量”或“用户变量”中，点击“新建”。
+输入变量名 OpenCV_DIR，在变量值中输入 OpenCV 安装的路径，例如 C:\opencv\build。
+点击“确定”保存更改。
+
+在 macOS 或 Linux 上
+打开终端。
+
+编辑您的 shell 配置文件（例如 ~/.bashrc, ~/.zshrc 或 ~/.bash_profile）：
+
+bash
+复制代码
+export OpenCV_DIR=/path/to/opencv/build
+将 /path/to/opencv/build 替换为 OpenCV 安装路径。
+
+保存文件后，运行以下命令使更改生效：
+
+bash
+复制代码
+source ~/.bashrc  # 或者使用 `source ~/.zshrc` 根据您的 shell 类型
+完成这些步骤后，CMake 应该可以在运行时读取 OpenCV_DIR 变量，确保您的路径正确指向 OpenCV 安装目录的 build 文件夹。
+
+2. Qt安装
+
+将 DLL 添加到环境变量 PATH
+为了让应用程序运行时找到 Qt6Widgets.dll，需要将 Qt 的 bin 目录添加到 PATH 环境变量中：
+
+打开“开始”菜单，搜索“环境变量”并打开“编辑系统环境变量”。
+在“系统变量”中找到 PATH，选择并点击“编辑”。
+点击“新建”，将 Qt 的 bin 目录路径（例如 E:\QT\6.8.0\msvc2019_64\bin）添加进去。
+点击“确定”并保存更改。
