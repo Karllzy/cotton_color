@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.29)
 project(cotton_color)
 
 set(CMAKE_CXX_STANDARD 17)
+
+add_definitions(-DUNICODE -D_UNICODE)
 
 # 设置 OpenCV 路径
 if(DEFINED ENV{OpenCV_DIR})
