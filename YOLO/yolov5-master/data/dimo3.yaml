@@ -1,7 +1,0 @@
-path: ../datasets/dimo
-train: D:\pycharm\yolov5-master\datasets\dimo3\images\train
-val: D:\pycharm\yolov5-master\datasets\dimo3\images\val
-test: # test images (optional)
-# Classes
-names:
-  0: dimo
