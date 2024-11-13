@@ -55,51 +55,86 @@ void vibrantColorDetection(const Mat& inputImage, Mat& outputImage, const map<st
     // 对饱和度图像应用阈值处理
     threshold(saturation, outputImage, saturationThreshold, 255, THRESH_BINARY);
 }
-string openFileDialog() {
+std::wstring openFileDialog() {
     // 初始化文件选择对话框
-    OPENFILENAME ofn;       // 文件对话框结构
-    wchar_t szFile[260];    // 存储选择的文件路径
+    OPENFILENAMEW ofn;       // 使用宽字符版本的结构
+    wchar_t szFile[260] = {0};    // 存储选择的文件路径
 
-    // 设置 OPENFILENAME 结构的默认值
+    // 设置 OPENFILENAMEW 结构的默认值
     ZeroMemory(&ofn, sizeof(ofn));
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = NULL;
-    ofn.lpstrFile = szFile;
+    ofn.lpstrFile = szFile;  // 设置文件路径缓冲区
     ofn.nMaxFile = sizeof(szFile) / sizeof(szFile[0]);
     ofn.lpstrFilter = L"Image Files\0*.BMP;*.JPG;*.JPEG;*.PNG;*.GIF\0All Files\0*.*\0";
     ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;
+    ofn.lpstrFileTitle = NULL;  // 不需要单独的文件名
     ofn.nMaxFileTitle = 0;
-    ofn.lpstrInitialDir = NULL;
-    ofn.lpstrTitle = L"Select an image file";
+    ofn.lpstrInitialDir = NULL;  // 使用默认初始目录
+    ofn.lpstrTitle = L"Select an image file";  // 对话框标题
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
     // 打开文件选择对话框
-    if (GetOpenFileName(&ofn) == TRUE) {
-        // 将 wchar_t 转换为 string
-        wstring ws(szFile);
-        string filePath(ws.begin(), ws.end());
-        return filePath;
+    if (GetOpenFileNameW(&ofn) == TRUE) {
+        return szFile;  // 返回选中的文件路径
     }
 
-    return "";  // 如果用户取消，返回空字符串
+    return L"";  // 如果用户取消，返回空字符串
 }
 
-
+/**
+ * @brief 读取图像文件，支持 Unicode 路径。
+ *
+ * @return 加载的图像，类型为 cv::Mat。如果加载失败，返回空的 Mat。
+ */
 Mat readImage() {
-    // 读取输入图像
-    string imagePath = openFileDialog();
+    // 读取输入图像路径
+    std::wstring imagePath = openFileDialog();
 
     if (imagePath.empty()) {
-        cout << "No file selected or user cancelled." << endl;
+        wcout << L"No file selected or user cancelled." << endl;
         return Mat();
     }
 
-    // 使用 OpenCV 读取选中的图片
-    Mat image = imread(imagePath);
+    // 使用 Windows API 打开文件
+    HANDLE hFile = CreateFileW(imagePath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        wcout << L"Error: Could not open file." << endl;
+        return Mat();
+    }
+
+    // 获取文件大小
+    LARGE_INTEGER fileSize;
+    if (!GetFileSizeEx(hFile, &fileSize)) {
+        wcout << L"Error: Could not get file size." << endl;
+        CloseHandle(hFile);
+        return Mat();
+    }
+
+    if (fileSize.QuadPart > MAXDWORD) {
+        wcout << L"Error: File size too large." << endl;
+        CloseHandle(hFile);
+        return Mat();
+    }
+
+    DWORD dwFileSize = static_cast<DWORD>(fileSize.QuadPart);
+
+    // 读取文件内容到缓冲区
+    std::vector<BYTE> buffer(dwFileSize);
+    DWORD bytesRead = 0;
+    if (!ReadFile(hFile, buffer.data(), dwFileSize, &bytesRead, NULL) || bytesRead != dwFileSize) {
+        wcout << L"Error: Could not read file." << endl;
+        CloseHandle(hFile);
+        return Mat();
+    }
+
+    CloseHandle(hFile);
+
+    // 使用 OpenCV 从内存缓冲区读取图像
+    Mat image = imdecode(buffer, IMREAD_COLOR);
 
     if (image.empty()) {
-        cout << "Error: Could not load image." << endl;
+        wcout << L"Error: Could not decode image." << endl;
         return Mat();
     }
 
@@ -139,7 +174,7 @@ int main() {
     vibrantGreenDetection(inputImage, outputImage, params);
 
     // 定义缩放因子，1.0 表示原始大小，>1.0 表示放大，<1.0 表示缩小
-    double scaleFactor = 1.5;  // 将图像放大1.5倍
+    double scaleFactor = 0.6;  // 将图像放大1.5倍
 
     // 显示原图和检测到的绿色区域，使用缩放因子
     showImage("Original Image", inputImage, scaleFactor);
