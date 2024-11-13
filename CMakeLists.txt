@@ -51,12 +51,16 @@ target_link_libraries(cotton_range Qt6::Widgets ${OpenCV_LIBS} ${MIL_LIBS})
 # 添加可执行文件 cotton_color2
 add_executable(cotton_color2 cotton_color2.cpp)
 # 链接 OpenCV 和 Qt 库
-target_link_libraries(cotton_color2 Qt6::Widgets ${OpenCV_LIBS} Mil)
+target_link_libraries(cotton_color2 Qt6::Widgets ${OpenCV_LIBS} ${MIL_LIBS})
+
 add_executable(color_matching Matrox/template_matching.cpp
-        Matrox/onnx_running.cpp
-        Matrox/onnx_running.h
-        Matrox/ui.cpp)
+        Matrox/onnx_running.cpp)
+target_link_libraries(color_matching Qt6::Widgets ${OpenCV_LIBS} ${MIL_LIBS})
+
 
 add_executable(ui Matrox/ui.cpp)
 target_link_libraries(ui Qt6::Widgets)
 
+
+add_executable(onnx Matrox/onnx_running.cpp)
+target_link_libraries(onnx Qt6::Widgets ${MIL_LIBS})
