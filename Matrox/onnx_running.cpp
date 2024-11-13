@@ -8,220 +8,109 @@
 #include <mil.h>
 //#include <milim.h> // 添加此行
 #include <iostream>
+#include <mil.h>
 
-/* Example functions declarations. */
-void SingleModelExample(MIL_ID MilSystem, MIL_ID MilDisplay);
+// Path definitions.
+#define EXAMPLE_ONNX_MODEL_PATH  MIL_TEXT("C:\\Users\\zjc\\Desktop\\WeChat Files\\wxid_ipl8u0ctajtn22\\FileStorage\\File\\2024-11\\best(2).onnx")
+#define TARGET_IMAGE_DIR_PATH    MIL_TEXT("C:\\Users\\zjc\\Desktop\\dimo2.bmp")
 
-/*****************************************************************************/
-/* Main.
-******************************************************************************/
 int MosMain(void)
 {
-    MIL_ID MilApplication,     /* Application identifier. */
-        MilSystem,          /* System Identifier.      */
-        MilDisplay;         /* Display identifier.     */
+    MIL_ID MilApplication = M_NULL,   // MIL application identifier
+        MilSystem = M_NULL,            // MIL system identifier
+        MilDisplay = M_NULL,           // MIL display identifier
+        MilImage = M_NULL,             // MIL image identifier
+        MilDetectedImage = M_NULL,     // MIL image with detections
+        DetectCtx = M_NULL,            // MIL ONNX detection context
+        DetectRes = M_NULL;            // MIL detection result
 
-    /* Allocate defaults. */
-    MappAllocDefault(M_DEFAULT, &MilApplication, &MilSystem, &MilDisplay, M_NULL, M_NULL);
+    // Allocate MIL objects.
+    MappAlloc(M_NULL, M_DEFAULT, &MilApplication);
+    MsysAlloc(M_DEFAULT, M_SYSTEM_DEFAULT, M_DEFAULT, M_DEFAULT, &MilSystem);
+    MdispAlloc(MilSystem, M_DEFAULT, MIL_TEXT("M_DEFAULT"), M_DEFAULT, &MilDisplay);
 
-    /* Run single model example. */
-    SingleModelExample(MilSystem, MilDisplay);
-
-    /* Free defaults. */
-    MappFreeDefault(MilApplication, MilSystem, MilDisplay, M_NULL, M_NULL);
-
-    return 0;
-}
-
-/*****************************************************************************/
-/* Single model example. */
-
-/* Source MIL image file specifications. */
-#define SINGLE_MODEL_IMAGE      MIL_TEXT("C:\\Users\\zjc\\Desktop\\diguandai2.png")  // 替换为您的模板RGB图像文件路径
-
-/* Target MIL image file specifications. */
-#define SINGLE_MODEL_TARGET_IMAGE  MIL_TEXT ("C:\\Users\\zjc\\Desktop\\diguandai.png")    // 替换为您的待检测RGB图像文件路径
-
-/* Search speed: M_VERY_HIGH for faster search, M_MEDIUM for precision and robustness. */
-#define SINGLE_MODEL_SEARCH_SPEED   M_LOW
-
-/* Model specifications. */
-#define MODEL_OFFSETX               3200L  // 根据您的模板图像调整
-#define MODEL_OFFSETY               550L  // 根据您的模板图像调整
-#define MODEL_SIZEX                200L  // 根据您的模板图像调整
-#define MODEL_SIZEY                 200L  // 根据您的模板图像调整
-#define MODEL_MAX_OCCURRENCES       6L
-
-void SingleModelExample(MIL_ID MilSystem, MIL_ID MilDisplay)
-{
-    clock_t start_time = clock();
-
-    MIL_ID      MilColorImage,                    /* 彩色图像缓冲区标识符。*/
-        MilImage,                         /* 灰度图像缓冲区标识符。*/
-        GraphicList;                      /* 图形列表标识符。*/
-    MIL_ID      MilSearchContext,                 /* 搜索上下文。*/
-        MilResult;                        /* 结果标识符。*/
-    MIL_DOUBLE  ModelDrawColor = M_COLOR_RED;     /* 模板绘制颜色。*/
-    MIL_INT     Model[MODEL_MAX_OCCURRENCES],     /* 模板索引。*/
-        NumResults = 0L;                 /* 找到的结果数量。*/
-    MIL_DOUBLE  Score[MODEL_MAX_OCCURRENCES],     /* 模板匹配得分。*/
-        XPosition[MODEL_MAX_OCCURRENCES], /* 模板X位置。*/
-        YPosition[MODEL_MAX_OCCURRENCES], /* 模板Y位置。*/
-        Angle[MODEL_MAX_OCCURRENCES],     /* 模板角度。*/
-        Scale[MODEL_MAX_OCCURRENCES],     /* 模板缩放。*/
-        Time = 0.0;                       /* 计时变量。*/
-    int         i;                                /* 循环变量。*/
-
-
-    /* 加载RGB模板图像。 */
-    MbufRestore(SINGLE_MODEL_IMAGE, MilSystem, &MilColorImage);
-
-    /* 获取图像尺寸。 */
-    MIL_INT Width = MbufInquire(MilColorImage, M_SIZE_X, M_NULL);
-    MIL_INT Height = MbufInquire(MilColorImage, M_SIZE_Y, M_NULL);
-
-    /* 分配灰度图像缓冲区。 */
-    MbufAlloc2d(MilSystem, Width, Height, 8 + M_UNSIGNED, M_IMAGE + M_PROC + M_DISP, &MilImage);
-
-    /* 将RGB图像转换为灰度图像。 */
-    MimConvert(MilColorImage, MilImage, M_RGB_TO_L);
-
-    /* 选择灰度图像进行显示。 */
-    MdispSelect(MilDisplay, MilImage);
-
-    /* 释放彩色图像缓冲区。 */
-    MbufFree(MilColorImage);
-
-    /* Allocate a graphic list to hold the subpixel annotations to draw. */
-    MgraAllocList(MilSystem, M_DEFAULT, &GraphicList);
-
-    /* Associate the graphic list to the display for annotations. */
-    MdispControl(MilDisplay, M_ASSOCIATED_GRAPHIC_LIST_ID, GraphicList);
-
-    /* Allocate a Geometric Model Finder context. */
-    MmodAlloc(MilSystem, M_GEOMETRIC, M_DEFAULT, &MilSearchContext);
-
-    /* Allocate a result buffer. */
-    MmodAllocResult(MilSystem, M_DEFAULT, &MilResult);
-
-    /* Define the model. */
-    MmodDefine(MilSearchContext, M_IMAGE, MilImage,
-        MODEL_OFFSETX, MODEL_OFFSETY, MODEL_SIZEX, MODEL_SIZEY);
-
-    /* Set the search speed. */
-    MmodControl(MilSearchContext, M_CONTEXT, M_SPEED, SINGLE_MODEL_SEARCH_SPEED);
-
-    /* Preprocess the search context. */
-    MmodPreprocess(MilSearchContext, M_DEFAULT);
-
-    /* Draw box and position it in the source image to show the model. */
-    MgraColor(M_DEFAULT, ModelDrawColor);
-    MmodDraw(M_DEFAULT, MilSearchContext, GraphicList,
-        M_DRAW_BOX + M_DRAW_POSITION, 0, M_ORIGINAL);
-    clock_t end_time = clock();
-    std::cout << "The run time is: " << (double)(end_time - start_time) / CLOCKS_PER_SEC << "s";
-    /* Pause to show the model. */
-    MosPrintf(MIL_TEXT("\nGEOMETRIC MODEL FINDER:\n"));
-    MosPrintf(MIL_TEXT("-----------------------\n\n"));
-    MosPrintf(MIL_TEXT("A model context was defined with "));
-    MosPrintf(MIL_TEXT("the model in the displayed image.\n"));
-    MosPrintf(MIL_TEXT("Press <Enter> to continue.\n\n"));
-    MosGetch();
-
-    /* Clear annotations. */
-    MgraClear(M_DEFAULT, GraphicList);
-
-    /* 加载RGB待检测图像。 */
-    MbufRestore(SINGLE_MODEL_TARGET_IMAGE, MilSystem, &MilColorImage);
-
-    /* 确保待检测图像的尺寸与模板图像一致。 */
-    MIL_INT TargetWidth = MbufInquire(MilColorImage, M_SIZE_X, M_NULL);
-    MIL_INT TargetHeight = MbufInquire(MilColorImage, M_SIZE_Y, M_NULL);
-
-    /* 如果尺寸不同，需要重新分配灰度图像缓冲区。 */
-    if (TargetWidth != Width || TargetHeight != Height)
+    // Load the image into memory.
+    if (MbufRestore(TARGET_IMAGE_DIR_PATH, MilSystem, &MilImage) != M_NULL)
     {
-        /* 释放之前的灰度图像缓冲区。 */
-        MbufFree(MilImage);
-
-        /* 分配新的灰度图像缓冲区。 */
-        MbufAlloc2d(MilSystem, TargetWidth, TargetHeight, 8 + M_UNSIGNED, M_IMAGE + M_PROC + M_DISP, &MilImage);
-
-        /* 更新宽度和高度。 */
-        Width = TargetWidth;
-        Height = TargetHeight;
+        MosPrintf(MIL_TEXT("Image loaded successfully.\n"));
+    }
+    else
+    {
+        MosPrintf(MIL_TEXT("Failed to load image.\n"));
+        return 1;  // Exit if the image loading failed
     }
 
-    /* 将RGB待检测图像转换为灰度图像。 */
-    MimConvert(MilColorImage, MilImage, M_RGB_TO_L);
+    // Import the YOLOv5 ONNX model into the detection context.
+    MosPrintf(MIL_TEXT("Importing the YOLOv5 ONNX model into the detection context...\n"));
+    MclassAlloc(MilSystem, M_CLASSIFIER_ONNX, M_DEFAULT, &DetectCtx);
+    MclassImport(EXAMPLE_ONNX_MODEL_PATH, M_ONNX_FILE, DetectCtx, M_DEFAULT, M_DEFAULT, M_DEFAULT);
+    MosPrintf(MIL_TEXT("Model imported successfully.\n"));
 
-    /* 释放彩色图像缓冲区。 */
-    MbufFree(MilColorImage);
+    // Preprocess the detection context.
+    MclassPreprocess(DetectCtx, M_DEFAULT);  // Ensure the context is preprocessed.
 
-    /* 显示灰度待检测图像。 */
-    MdispSelect(MilDisplay, MilImage);
+    // Allocate a detection result buffer.
+    MclassAllocResult(MilSystem, M_PREDICT_ONNX_RESULT, M_DEFAULT, &DetectRes);
 
-    /* Dummy first call for bench measure purpose only (bench stabilization,
-       cache effect, etc...). This first call is NOT required by the application. */
-    MmodFind(MilSearchContext, MilImage, MilResult);
+    // Perform object detection on the image using MclassPredict.
+    MclassPredict(DetectCtx, MilImage, DetectRes, M_DEFAULT);
+    MosPrintf(MIL_TEXT("Object detection completed.\n"));
 
-    /* Reset the timer. */
-    MappTimer(M_DEFAULT, M_TIMER_RESET + M_SYNCHRONOUS, M_NULL);
+    // Allocate a buffer for displaying the detection results.
+    MbufAlloc2d(MilSystem, 640, 640, 8 + M_UNSIGNED, M_IMAGE + M_PROC, &MilDetectedImage);
 
-    /* Find the model. */
-    MmodFind(MilSearchContext, MilImage, MilResult);
+    // Retrieve and draw the detection results manually.
+    MIL_INT NumDetections = 0;
+    MclassGetResult(DetectRes, M_GENERAL, M_TYPE_MIL_INT, &NumDetections);
 
-    /* Read the find time. */
-    MappTimer(M_DEFAULT, M_TIMER_READ + M_SYNCHRONOUS, &Time);
-
-    /* Get the number of models found. */
-    MmodGetResult(MilResult, M_DEFAULT, M_NUMBER + M_TYPE_MIL_INT, &NumResults);
-
-    /* If a model was found above the acceptance threshold. */
-    if ((NumResults >= 1) && (NumResults <= MODEL_MAX_OCCURRENCES))
+    if (NumDetections > 0)
     {
-        /* Get the results of the single model. */
-        MmodGetResult(MilResult, M_DEFAULT, M_INDEX + M_TYPE_MIL_INT, Model);
-        MmodGetResult(MilResult, M_DEFAULT, M_POSITION_X, XPosition);
-        MmodGetResult(MilResult, M_DEFAULT, M_POSITION_Y, YPosition);
-        MmodGetResult(MilResult, M_DEFAULT, M_ANGLE, Angle);
-        MmodGetResult(MilResult, M_DEFAULT, M_SCALE, Scale);
-        MmodGetResult(MilResult, M_DEFAULT, M_SCORE, Score);
-
-        /* Print the results for each model found. */
-        MosPrintf(MIL_TEXT("The model was found in the target image:\n\n"));
-        MosPrintf(MIL_TEXT("Result   Model   X Position   Y Position   ")
-            MIL_TEXT("Angle   Scale   Score\n\n"));
-        for (i = 0; i < NumResults; i++)
+        for (MIL_INT i = 0; i < NumDetections; i++)
         {
-            MosPrintf(MIL_TEXT("%-9d%-8d%-13.2f%-13.2f%-8.2f%-8.2f%-5.2f%%\n"),
-                i, (int)Model[i], XPosition[i], YPosition[i],
-                Angle[i], Scale[i], Score[i]);
-        }
-        MosPrintf(MIL_TEXT("\nThe search time is %.1f ms\n\n"), Time * 1000.0);
+            MIL_DOUBLE Score;
+            MIL_INT ClassIndex;
+            MIL_DOUBLE BBoxX, BBoxY, BBoxWidth, BBoxHeight;
 
-        /* Draw edges, position and box over the occurrences that were found. */
-        for (i = 0; i < NumResults; i++)
-        {
-            MgraColor(M_DEFAULT, ModelDrawColor);
-            MmodDraw(M_DEFAULT, MilResult, GraphicList,
-                M_DRAW_EDGES + M_DRAW_BOX + M_DRAW_POSITION, i, M_DEFAULT);
+            // Retrieve detection results for each object.
+            MclassGetResult(DetectRes, i, M_SCORE + M_TYPE_MIL_DOUBLE, &Score);
+            MclassGetResult(DetectRes, i, M_INDEX + M_TYPE_MIL_INT, &ClassIndex);
+            MclassGetResult(DetectRes, i, M_SEED_VALUE + M_TYPE_MIL_DOUBLE, &BBoxX);
+            MclassGetResult(DetectRes, i, M_SEED_VALUE + M_TYPE_MIL_DOUBLE, &BBoxY);
+            MclassGetResult(DetectRes, i, M_SEED_VALUE + M_TYPE_MIL_DOUBLE, &BBoxWidth);
+            MclassGetResult(DetectRes, i, M_SEED_VALUE + M_TYPE_MIL_DOUBLE, &BBoxHeight);
+
+            // Draw bounding box.
+            MgraColor(M_DEFAULT, M_COLOR_GREEN);
+            MgraRect(M_DEFAULT, MilDetectedImage, BBoxX, BBoxY, BBoxX + BBoxWidth, BBoxY + BBoxHeight);
+
+            // Optionally, display detection score or class name (if needed).
+            MIL_TEXT_CHAR Label[256];
+            MosSprintf(Label, 256, MIL_TEXT("Class %d: %.2lf%%"), ClassIndex, Score * 100);
+            MgraFont(M_DEFAULT, M_FONT_DEFAULT_SMALL);
+            MgraText(M_DEFAULT, MilDetectedImage, BBoxX, BBoxY - 10, Label);
         }
     }
     else
     {
-        MosPrintf(MIL_TEXT("The model was not found or the number of models ")
-            MIL_TEXT("found is greater than\n"));
-        MosPrintf(MIL_TEXT("the specified maximum number of occurrence !\n\n"));
+        MosPrintf(MIL_TEXT("No detections found.\n"));
     }
 
-    /* Wait for a key to be pressed. */
-    MosPrintf(MIL_TEXT("Press <Enter> to continue.\n\n"));
+    // Display the image with detection results.
+    MdispSelect(MilDisplay, MilDetectedImage);
+
+    // Wait for the user to close the window.
+    MosPrintf(MIL_TEXT("Press <Enter> to exit.\n"));
     MosGetch();
 
-    /* Free MIL objects. */
-    MgraFree(GraphicList);
+    // Free all allocated resources.
     MbufFree(MilImage);
-    MmodFree(MilSearchContext);
-    MmodFree(MilResult);
+    MbufFree(MilDetectedImage);
+    MclassFree(DetectRes);
+    MclassFree(DetectCtx);
+    MdispFree(MilDisplay);
+    MsysFree(MilSystem);
+    MappFree(MilApplication);
+
+    return 0;
 }
+
