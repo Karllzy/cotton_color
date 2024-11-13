@@ -142,7 +142,7 @@ int main() {
 
     // 使用 map 模拟参数传递
     map<string, int> params;
-    params["saturationThreshold"] = 100;  // 设置饱和度阈值为 100
+    params["saturationThreshold"] = 134;  // 设置饱和度阈值为 100
 
     // 调用鲜艳颜色检测函数
     vibrantColorDetection(inputImage, outputImage, params);
