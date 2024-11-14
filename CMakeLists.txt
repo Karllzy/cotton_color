@@ -33,7 +33,6 @@ set(CMAKE_AUTORCC ON)
 
 #配置mil库
 include_directories(E:/QTexamble/matrox/Include)
-
 # 添加 MIL 库的库文件路径
 link_directories(E:/QTexamble/matrox/LIB)
 file(GLOB MIL_LIBS E:/QTexamble/matrox/LIB/*.lib)
