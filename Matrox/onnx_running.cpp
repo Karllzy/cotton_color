@@ -53,7 +53,7 @@ int MosMain(void)
     MclassAllocResult(MilSystem, M_PREDICT_ONNX_RESULT, M_DEFAULT, &DetectRes);
 
     // Perform object detection on the image using MclassPredict.
-    MclassPredict(DetectCtx, MilImage, DetectRes, M_DEFAULT);
+    MclassPredict(DetectCtx, MilImage, DetectRes, M_DEFAULT);////执行到这一步报错
     MosPrintf(MIL_TEXT("Object detection completed.\n"));
 
     // Allocate a buffer for displaying the detection results.
