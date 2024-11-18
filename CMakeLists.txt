@@ -43,7 +43,8 @@ add_executable(cotton_color cotton_color.cpp)
 target_link_libraries(cotton_color Qt6::Widgets ${OpenCV_LIBS} comdlg32)
 
 # 添加可执行文件 cotton_color
-add_executable(cotton_range Matrox/color_range.cpp)
+add_executable(cotton_range Matrox/color_range.cpp
+        Matrox/color_range.h Matrox/utils.h Matrox/utils.cpp)
 # 链接 OpenCV 和 Qt 库
 target_link_libraries(cotton_range Qt6::Widgets ${OpenCV_LIBS} ${MIL_LIBS})
 
@@ -52,9 +53,10 @@ add_executable(cotton_color2 cotton_color2.cpp)
 # 链接 OpenCV 和 Qt 库
 target_link_libraries(cotton_color2 Qt6::Widgets ${OpenCV_LIBS} ${MIL_LIBS})
 
-add_executable(color_matching Matrox/template_matching.cpp)
+add_executable(color_matching Matrox/template_matching.cpp
+        Matrox/utils.cpp
+        Matrox/utils.h)
 target_link_libraries(color_matching Qt6::Widgets ${OpenCV_LIBS} ${MIL_LIBS})
-
 
 
 add_executable(ui Matrox/ui.cpp)
