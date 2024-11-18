@@ -162,6 +162,10 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25, model_sav
 
 
 if __name__ == '__main__':
+    # TODO:
+    #  1. 能像yolo一样使用不同参数运行
+    #  2. 能够比较不同模型的预测时间，根据配置可以切换模型。
+
     model_ft = models.resnet18(weights='IMAGENET1K_V1')
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Linear(num_ftrs, 2)
@@ -181,3 +185,4 @@ if __name__ == '__main__':
     model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=25,
                            model_save_dir=model_save_dir, save_onnx=True)
     # visualize_model(model_ft)
+    # TODO: 3. 新增dgd_class/export.py, 可以把训练得到的pt文件转换为onnx

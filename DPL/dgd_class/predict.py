@@ -19,7 +19,7 @@ def load_onnx_model(model_path='model/best_model_11.14.19.30.onnx'):
 
 
 # 预测函数
-def visualize_model_predictions(onnx_session, img_path):
+def visualize_model_predictions(onnx_session: str, img_path: str):
     img = Image.open(img_path)
     img = img.convert('RGB')  # 转换为 RGB 模式
 
@@ -53,6 +53,11 @@ def visualize_model_predictions(onnx_session, img_path):
 
 # 使用已训练的 ONNX 模型进行预测
 if __name__ == '__main__':
+    # TODO:
+    #  写一个模型类model = Model()
+    #  1. 标准化模型加载接口 model.load(weight_path: str)
+    #  2. 标准化预测接口调用方式为 output_image: torch.tensor = model.predict(input_image: torch.tensor, param: dict)
+
     # 加载 ONNX 模型
     model_path = 'model/best_model_11.14.19.30.onnx'
     onnx_session = load_onnx_model(model_path)
