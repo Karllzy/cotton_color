@@ -1,44 +1,22 @@
-//
-// Created by zjc on 24-11-12.
-//
-
-#include <mil.h>
 #include <iostream>
-#include <chrono>
-#define IMAGE_PATH MIL_TEXT("C:\\Users\\zjc\\Desktop\\cotton2.bmp")
+#include <map>
+#include <mil.h>
+#include <string>
+#include "utils.h"
 
-// 全局变量，方便在各个函数中使用
+#define IMAGE_PATH MIL_TEXT("C:\\Users\\zjc\\Desktop\\cotton_image\\174.bmp")
+#define SAVE_PATH MIL_TEXT("C:\\Users\\zjc\\Desktop\\diguandai.png")
+
+
+// Global variables
 MIL_ID MilApplication = M_NULL, MilSystem = M_NULL, MilDisplay = M_NULL;
 
-
-// 时间测量模板函数
-template <typename Func>
-void measureExecutionTime(Func func) {
-    // 获取当前时间作为起点
-    auto start = std::chrono::high_resolution_clock::now();
-
-    // 执行传入的函数
-    func();
-
-    // 获取当前时间作为结束点
-    auto end = std::chrono::high_resolution_clock::now();
-
-    // 计算时间差并转换为毫秒
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-
-    std::cout << "Function execution time: " << duration.count() << " milliseconds" << std::endl;
-}
-
-// LabProcess 函数，支持通过参数控制阈值范围，提供默认值
-void LabProcess(MIL_ID& inputImage, MIL_ID& outputImageLab,
-    MIL_DOUBLE lowerL = 101.0, MIL_DOUBLE upperL = 135.0,
-    MIL_DOUBLE lowerA = 101.0, MIL_DOUBLE upperA = 120.0,
-    MIL_DOUBLE lowerB = 95.0, MIL_DOUBLE upperB = 134.0)
+// Optimized LabProcess function
+void lab_process(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std::map<std::string, int>& params)
 {
     MIL_ID MilLabImage = M_NULL, MilLChannel = M_NULL, MilAChannel = M_NULL, MilBChannel = M_NULL;
-    MIL_ID MilBinaryL = M_NULL, MilBinaryA = M_NULL, MilBinaryB = M_NULL;
 
-    // 检查输入图像的通道数
+    // Check number of bands
     MIL_INT NumBands = 0;
     MbufInquire(inputImage, M_SIZE_BAND, &NumBands);
     if (NumBands != 3)
@@ -47,62 +25,84 @@ void LabProcess(MIL_ID& inputImage, MIL_ID& outputImageLab,
         return;
     }
 
-    // 分配用于存储 Lab 图像的缓冲区
-    MbufAllocColor(MbufInquire(inputImage, M_OWNER_SYSTEM, M_NULL), 3,
-        MbufInquire(inputImage, M_SIZE_X, M_NULL),
-        MbufInquire(inputImage, M_SIZE_Y, M_NULL),
-        8 + M_UNSIGNED,
-        M_IMAGE + M_PROC + M_DISP,
-        &MilLabImage);
+    // Inquire image properties once
+    MIL_ID MilSystem = MbufInquire(inputImage, M_OWNER_SYSTEM, M_NULL);
+    MIL_INT SizeX = MbufInquire(inputImage, M_SIZE_X, M_NULL);
+    MIL_INT SizeY = MbufInquire(inputImage, M_SIZE_Y, M_NULL);
 
-    // 将图像从 sRGB 转换到 Lab
+    // Allocate buffer for Lab image
+    MbufAllocColor(MilSystem, 3, SizeX, SizeY, 8 + M_UNSIGNED, M_IMAGE + M_PROC, &MilLabImage);
+
+    // Convert image from sRGB to Lab
     MimConvert(inputImage, MilLabImage, M_SRGB_TO_LAB);
 
-    // 创建 Lab 通道的子缓冲区
+    // Create child buffers for L, a, b channels
     MbufChildColor(MilLabImage, 0, &MilLChannel);
     MbufChildColor(MilLabImage, 1, &MilAChannel);
     MbufChildColor(MilLabImage, 2, &MilBChannel);
 
-    // 分配二值图像缓冲区
-    MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-        MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
-        M_IMAGE + M_PROC + M_DISP, &MilBinaryL);
-    MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-        MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
-        M_IMAGE + M_PROC + M_DISP, &MilBinaryA);
-    MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-        MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
-        M_IMAGE + M_PROC + M_DISP, &MilBinaryB);
+    // Allocate output image as 1-bit image
+    MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &outputImageLab);
+    MbufClear(outputImageLab, 0);  // Initialize to 0
 
-    // 对每个通道进行阈值分割
-    MimBinarize(MilLChannel, MilBinaryL, M_IN_RANGE, lowerL, upperL);
-    MimBinarize(MilAChannel, MilBinaryA, M_IN_RANGE, lowerA, upperA);
-    MimBinarize(MilBChannel, MilBinaryB, M_IN_RANGE, lowerB, upperB);
+    // Pre-allocate binary buffers as 1-bit images
+    MIL_ID MilBinaryL = M_NULL, MilBinaryA = M_NULL, MilBinaryB = M_NULL, MilResultLab = M_NULL;
+    MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &MilBinaryL);
+    MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &MilBinaryA);
+    MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &MilBinaryB);
+    MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &MilResultLab);
 
-    // 分配输出图像缓冲区
-    MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-        MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
-        M_IMAGE + M_PROC + M_DISP, &outputImageLab);
+    const std::vector<std::string> colors = {"green", "blue", "orange", "black", "red", "purple"};
 
-    // 将结果合并
-    MimArith(MilBinaryL, MilBinaryA, outputImageLab, M_AND);
-    MimArith(outputImageLab, MilBinaryB, outputImageLab, M_AND);
+    // Iterate over colors
+    // 遍历颜色
+    for (const auto& color : colors) {
+        // 构建参数键
+        std::string L_min_key = color + "_L_min";
+        std::string L_max_key = color + "_L_max";
+        std::string a_min_key = color + "_a_min";
+        std::string a_max_key = color + "_a_max";
+        std::string b_min_key = color + "_b_min";
+        std::string b_max_key = color + "_b_max";
 
-    // 释放资源
+        // 获取参数值
+        int L_min = params.at(L_min_key);
+        int L_max = params.at(L_max_key);
+        int a_min = params.at(a_min_key);
+        int a_max = params.at(a_max_key);
+        int b_min = params.at(b_min_key);
+        int b_max = params.at(b_max_key);
+
+        // 对每个通道进行二值化
+        MimBinarize(MilLChannel, MilBinaryL, M_IN_RANGE, L_min, L_max);
+        MimBinarize(MilAChannel, MilBinaryA, M_IN_RANGE, a_min, a_max);
+        MimBinarize(MilBChannel, MilBinaryB, M_IN_RANGE, b_min, b_max);
+
+        // 合并阈值结果
+        MimArith(MilBinaryL, MilBinaryA, MilResultLab, M_AND);
+        MimArith(MilResultLab, MilBinaryB, MilResultLab, M_AND);
+
+        // 与输出图像合并
+        MimArith(outputImageLab, MilResultLab, outputImageLab, M_OR);
+    }
+
+    // Free binary buffers
     MbufFree(MilBinaryL);
     MbufFree(MilBinaryA);
     MbufFree(MilBinaryB);
+    MbufFree(MilResultLab);
+
+    // Free resources
     MbufFree(MilLChannel);
     MbufFree(MilAChannel);
     MbufFree(MilBChannel);
     MbufFree(MilLabImage);
 }
 
-// HSVProcess 函数，支持通过参数控制饱和度阈值，提供默认值
-void HSVProcess(MIL_ID& inputImage, MIL_ID& outputImageHSV, MIL_DOUBLE saturationThreshold = 120.0)
+void hsv_process(const MIL_ID& inputImage, MIL_ID& outputImageHSV, const std::map<std::string, int>& params)
 {
     MIL_ID MilHSVImage = M_NULL, MilHChannel = M_NULL, MilSChannel = M_NULL, MilVChannel = M_NULL;
-
+    int saturationThreshold = params.at("saturation_threshold");
     // 检查输入图像的通道数
     MIL_INT NumBands = 0;
     MbufInquire(inputImage, M_SIZE_BAND, &NumBands);
@@ -134,7 +134,8 @@ void HSVProcess(MIL_ID& inputImage, MIL_ID& outputImageHSV, MIL_DOUBLE saturatio
         M_IMAGE + M_PROC + M_DISP, &outputImageHSV);
 
     // 对 S 通道进行阈值分割
-    MimBinarize(MilSChannel, outputImageHSV, M_GREATER, saturationThreshold, M_NULL);
+    MimBinarize(MilSChannel, outputImageHSV, M_GREATER,
+        saturationThreshold, M_NULL);
 
     // 释放资源
     MbufFree(MilHChannel);
@@ -143,60 +144,94 @@ void HSVProcess(MIL_ID& inputImage, MIL_ID& outputImageHSV, MIL_DOUBLE saturatio
     MbufFree(MilHSVImage);
 }
 
-// 综合测试函数，调用 LabProcess 和 HSVProcess 并合并结果
-void test_hsv(MIL_ID& inputImage,
-    MIL_DOUBLE lowerL = 101.0, MIL_DOUBLE upperL = 135.0,
-    MIL_DOUBLE lowerA = 101.0, MIL_DOUBLE upperA = 120.0,
-    MIL_DOUBLE lowerB = 95.0, MIL_DOUBLE upperB = 134.0,
-    MIL_DOUBLE saturationThreshold = 120.0)
-{
-    MIL_ID MilResultLab = M_NULL, MilResultHSV = M_NULL, MilCombinedResult = M_NULL;
+void high_sat_detect(const MIL_ID& inputImage, MIL_ID& outputImage, const std::map<std::string, int>& params) {
+    MIL_ID output_hsv=M_NULL, output_lab=M_NULL;
 
-    // 调用 LabProcess
-    LabProcess(inputImage, MilResultLab, lowerL, upperL, lowerA, upperA, lowerB, upperB);
+    hsv_process(inputImage, output_hsv, params);
+    lab_process(inputImage, output_lab, params);
 
-    // 调用 HSVProcess
-    HSVProcess(inputImage, MilResultHSV, saturationThreshold);
-
-    // 分配合并结果的缓冲区
     MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-        MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
-        M_IMAGE + M_PROC + M_DISP, &MilCombinedResult);
+        MbufInquire(inputImage, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
+        M_IMAGE + M_PROC, &outputImage);
 
     // 合并 Lab 和 HSV 的结果（取“或”运算）
-    MimArith(MilResultLab, MilResultHSV, MilCombinedResult, M_OR);
+    MimArith(output_hsv, output_lab, outputImage, M_OR);
 
-    //// 显示合并后的结果图像
-    MdispSelect(MilDisplay, MilCombinedResult);
-
-    //// 等待用户查看处理后的图像
-    printf("图像已处理并合并，按下 <Enter> 退出程序。\n");
-    getchar();
-
-    // 释放资源
-    MbufFree(MilResultLab);
-    MbufFree(MilResultHSV);
-    MbufFree(MilCombinedResult);
+    MbufFree(output_lab);
+    MbufFree(output_hsv);
 }
-
 
 int main()
 {
+    // Initialize MIL application
+    MappAllocDefault(M_DEFAULT, &MilApplication, &MilSystem, &MilDisplay, M_NULL,
+        M_NULL);
+
+    // Load input image
     MIL_ID MilImage = M_NULL;
-
-    // 初始化 MIL 应用程序
-    MappAllocDefault(M_DEFAULT, &MilApplication, &MilSystem, &MilDisplay, M_NULL, M_NULL);
-
-    // 加载输入图像
     MbufRestore(IMAGE_PATH, MilSystem, &MilImage);
 
-    // 使用 lambda 表达式测量 test_hsv() 的执行时间
-    measureExecutionTime([&]() {
-        test_hsv(MilImage);
-        });
+    // Define color ranges
+    std::map<std::string, int> params;
+    params["green_L_min"] = 68;
+    params["green_L_max"] = 125;
+    params["green_a_min"] = 101;
+    params["green_a_max"] = 120;
+    params["green_b_min"] = 130;
+    params["green_b_max"] = 140;
 
+    params["blue_L_min"] = 45;
+    params["blue_L_max"] = 66;
+    params["blue_a_min"] = 130;
+    params["blue_a_max"] = 145;
+    params["blue_b_min"] = 95;
+    params["blue_b_max"] = 105;
 
-    // 释放资源
+    params["orange_L_min"] = 166;
+    params["orange_L_max"] = 191;
+    params["orange_a_min"] = 135;
+    params["orange_a_max"] = 142;
+    params["orange_b_min"] = 160;
+    params["orange_b_max"] = 174;
+
+    params["black_L_min"] = 0;
+    params["black_L_max"] = 21;
+    params["black_a_min"] = 127;
+    params["black_a_max"] = 133;
+    params["black_b_min"] = 126;
+    params["black_b_max"] = 134;
+
+    params["red_L_min"] = 71;
+    params["red_L_max"] = 97;
+    params["red_a_min"] = 143;
+    params["red_a_max"] = 153;
+    params["red_b_min"] = 33;
+    params["red_b_max"] = 154;
+
+    params["purple_L_min"] = 171;
+    params["purple_L_max"] = 197;
+    params["purple_a_min"] = 131;
+    params["purple_a_max"] = 141;
+    params["purple_b_min"] = 108;
+    params["purple_b_max"] = 123;
+
+    params["saturation_threshold"] = 150;
+
+    // Initialize combined result
+    MIL_ID detection_result = M_NULL;
+
+    // Measure execution time
+    measure_execution_time([&]() {
+        high_sat_detect(MilImage, detection_result, params);
+    });
+    MbufSave(SAVE_PATH, detection_result);
+    // Display result
+
+    std::cout << "所有颜色检测已完成并合并。按 <Enter> 退出。" << std::endl;
+    getchar();
+
+    // Free resources
+    MbufFree(detection_result);
     MbufFree(MilImage);
     MappFreeDefault(MilApplication, MilSystem, MilDisplay, M_NULL, M_NULL);
 
