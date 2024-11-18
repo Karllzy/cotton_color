@@ -15,6 +15,10 @@ MIL_ID MilApplication = M_NULL, MilSystem = M_NULL, MilDisplay = M_NULL;
 void lab_process(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std::map<std::string, int>& params)
 {
     MIL_ID MilLabImage = M_NULL, MilLChannel = M_NULL, MilAChannel = M_NULL, MilBChannel = M_NULL;
+    MIL_ID lab_result=M_NULL;
+
+    int denoising = params.at("lab_denoising");
+
 
     // Check number of bands
     MIL_INT NumBands = 0;
@@ -51,7 +55,7 @@ void lab_process(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std::ma
     MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &MilBinaryA);
     MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &MilBinaryB);
     MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &MilResultLab);
-
+    MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &lab_result);
     const std::vector<std::string> colors = {"green", "blue", "orange", "black", "red", "purple"};
 
     // Iterate over colors
@@ -83,8 +87,11 @@ void lab_process(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std::ma
         MimArith(MilResultLab, MilBinaryB, MilResultLab, M_AND);
 
         // 与输出图像合并
-        MimArith(outputImageLab, MilResultLab, outputImageLab, M_OR);
+        MimArith(lab_result, MilResultLab, lab_result, M_OR);
+
     }
+    MimClose(lab_result, MilResultLab, denoising, M_BINARY);
+    MimOpen(MilResultLab, outputImageLab, denoising, M_BINARY);
 
     // Free binary buffers
     MbufFree(MilBinaryL);
@@ -97,12 +104,17 @@ void lab_process(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std::ma
     MbufFree(MilAChannel);
     MbufFree(MilBChannel);
     MbufFree(MilLabImage);
+    MbufFree(lab_result);
 }
 
 void hsv_process(const MIL_ID& inputImage, MIL_ID& outputImageHSV, const std::map<std::string, int>& params)
 {
     MIL_ID MilHSVImage = M_NULL, MilHChannel = M_NULL, MilSChannel = M_NULL, MilVChannel = M_NULL;
+    MIL_ID hsv_result = M_NULL;
+    MIL_ID hsv_denoising = M_NULL;
     int saturationThreshold = params.at("saturation_threshold");
+    int denoising = params.at("saturation_denoising");
+
     // 检查输入图像的通道数
     MIL_INT NumBands = 0;
     MbufInquire(inputImage, M_SIZE_BAND, &NumBands);
@@ -131,17 +143,28 @@ void hsv_process(const MIL_ID& inputImage, MIL_ID& outputImageHSV, const std::ma
     // 分配输出图像缓冲区
     MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
         MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
-        M_IMAGE + M_PROC + M_DISP, &outputImageHSV);
+        M_IMAGE + M_PROC + M_DISP, &hsv_result);
+    MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
+    MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
+    M_IMAGE + M_PROC + M_DISP, &hsv_denoising);
+    MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
+    MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
+    M_IMAGE + M_PROC + M_DISP, &outputImageHSV);
 
     // 对 S 通道进行阈值分割
-    MimBinarize(MilSChannel, outputImageHSV, M_GREATER,
+    MimBinarize(MilSChannel, hsv_result, M_GREATER,
         saturationThreshold, M_NULL);
+
+    MimClose(hsv_result, hsv_denoising, denoising, M_BINARY);
+    MimOpen(hsv_denoising, outputImageHSV, denoising, M_BINARY);
 
     // 释放资源
     MbufFree(MilHChannel);
     MbufFree(MilSChannel);
     MbufFree(MilVChannel);
     MbufFree(MilHSVImage);
+    MbufFree(hsv_result);
+    MbufFree(hsv_denoising);
 }
 
 void high_sat_detect(const MIL_ID& inputImage, MIL_ID& outputImage, const std::map<std::string, int>& params) {
@@ -214,8 +237,10 @@ int main()
     params["purple_a_max"] = 141;
     params["purple_b_min"] = 108;
     params["purple_b_max"] = 123;
+    params["lab_denoising"] = 1;
 
     params["saturation_threshold"] = 150;
+    params["saturation_denoising"] = 1;
 
     // Initialize combined result
     MIL_ID detection_result = M_NULL;
