@@ -20,25 +20,12 @@ def visualize_model_predictions(model: Model, img_path: str, save_dir: str, clas
     img = Image.open(img_path)
     img = img.convert('RGB')  # 转换为 RGB 模式
 
-    # 图像预处理
-    data_transforms = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ])
-    img_transformed = data_transforms(img)
-    img_transformed = img_transformed.unsqueeze(0)
-    img_transformed = img_transformed.to(model.device)
-
     # 使用模型进行预测
-    preds = model.predict(img_transformed)
-
-    # 获取预测类别
-    _, predicted_class = torch.max(preds, 1)
+    preds = model.predict(img)
+    print(preds)
 
     # 在图像上添加预测结果文本
-    predicted_label = class_names[predicted_class[0]]
+    predicted_label = class_names[preds[0]]
 
     # 在图片上绘制文本
     img_with_text = img.copy()
@@ -93,8 +80,9 @@ def main():
     parser = argparse.ArgumentParser(description="Use an ONNX model for inference.")
 
     # 设置默认值，并允许用户通过命令行进行修改
-    parser.add_argument('--weights', type=str, default='model/model_1.onnx', help='Path to ONNX model file')
-    parser.add_argument('--img-path', type=str, default='dataset/val/dgd',
+    parser.add_argument('--weights', type=str, default=r'..\onnxs\dgd_class_11.14.onnx',
+                        help='Path to ONNX model file')
+    parser.add_argument('--img-path', type=str, default='../dataset/val/dgd',
                         help='Path to image or folder for inference')
     parser.add_argument('--save-dir', type=str, default='detect', help='Directory to save output images')
     parser.add_argument('--gpu', action='store_true', help='Use GPU for inference')

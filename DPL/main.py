@@ -35,8 +35,5 @@ def main():
     model = ClsModel(model_path=args.weights, device=device)
 
 
-
-
-
 if __name__ == '__main__':
     main()
