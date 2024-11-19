@@ -1,3 +1,6 @@
+//
+// Created by zjc on 24-11-19.
+//
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn/dnn.hpp>
 #include <iostream>
@@ -15,22 +18,48 @@ struct Detection {
 };
 
 // 在图像上绘制检测框
-void drawDetections(cv::Mat& image, const std::vector<Detection>& detections) {
+void drawDetections(cv::Mat& inputImage, const std::vector<Detection>& detections) {
     for (const auto& detection : detections) {
-        cv::rectangle(image, detection.box, cv::Scalar(0, 255, 0), 2);
+        cv::rectangle(inputImage, detection.box, cv::Scalar(0, 255, 0), 2);
         std::string label = "Object: " + cv::format("%.2f", detection.confidence);
         int baseLine;
         cv::Size labelSize = cv::getTextSize(label, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
-        cv::rectangle(image, cv::Point(detection.box.x, detection.box.y - labelSize.height - baseLine),
+        cv::rectangle(inputImage, cv::Point(detection.box.x, detection.box.y - labelSize.height - baseLine),
                       cv::Point(detection.box.x + labelSize.width, detection.box.y), cv::Scalar(0, 255, 0), cv::FILLED);
-        cv::putText(image, label, cv::Point(detection.box.x, detection.box.y - baseLine), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0), 1);
+        cv::putText(inputImage, label, cv::Point(detection.box.x, detection.box.y - baseLine), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0), 1);
     }
 }
+cv::Mat resizeAndPad(const cv::Mat& image, int targetWidth, int targetHeight, int& padTop, int& padLeft, float& scale, const cv::Scalar& padColor) {
+    int originalWidth = image.cols;
+    int originalHeight = image.rows;
 
+    // 计算缩放比例
+    scale = std::min((float)targetWidth / originalWidth, (float)targetHeight / originalHeight);
+
+    // 缩放后的新尺寸
+    int newWidth = static_cast<int>(originalWidth * scale);
+    int newHeight = static_cast<int>(originalHeight * scale);
+
+    // 缩放图像
+    cv::Mat resizedImage;
+    cv::resize(image, resizedImage, cv::Size(newWidth, newHeight));
+
+    // 计算填充值
+    padTop = (targetHeight - newHeight) / 2;
+    int padBottom = targetHeight - newHeight - padTop;
+    padLeft = (targetWidth - newWidth) / 2;
+    int padRight = targetWidth - newWidth - padLeft;
+
+    // 在图像周围添加填充，使用灰色 (128, 128, 128) 填充
+    cv::Mat paddedImage;
+    cv::copyMakeBorder(resizedImage, paddedImage, padTop, padBottom, padLeft, padRight, cv::BORDER_CONSTANT, padColor);
+
+    return paddedImage;
+}
 int main() {
     // 模型路径和图片路径
     std::string modelPath = "C:\\Users\\zjc\\Desktop\\dimo_11.14.onnx";
-    std::string imagePath = "C:\\Users\\zjc\\Desktop\\yolo_resized_image_640x640.png";
+    std::string imagePath = "C:\\Users\\zjc\\Desktop\\dimo.bmp";
 
     // 加载模型
     cv::dnn::Net net = cv::dnn::readNetFromONNX(modelPath);
@@ -41,9 +70,18 @@ int main() {
         std::cerr << "Could not read the image: " << imagePath << std::endl;
         return -1;
     }
+    // 设置填充颜色为灰色
+    cv::Scalar padColor(128, 128, 128);
 
+    // 预处理图像并添加填充
+    int padTop, padLeft;
+    float scale;
+    cv::Mat inputImage = resizeAndPad(image, INPUT_WIDTH, INPUT_HEIGHT, padTop, padLeft, scale, padColor);
+
+    // 显示调整和填充后的图像
+    cv::imshow("Resized and Padded Image", inputImage);
     // 预处理图像
-    cv::Mat blob = cv::dnn::blobFromImage(image, 1 / 255.0, cv::Size(INPUT_WIDTH, INPUT_HEIGHT), cv::Scalar(0, 0, 0), true, false);
+    cv::Mat blob = cv::dnn::blobFromImage(inputImage, 1 / 255.0, cv::Size(INPUT_WIDTH, INPUT_HEIGHT), cv::Scalar(0, 0, 0), true, false);
     net.setInput(blob);
 
 
@@ -65,10 +103,10 @@ int main() {
 
             // If needed, adjust for differences between input image size and model input size
             // Since they are the same in your case, this step can be omitted or kept as is
-            cx = cx * image.cols / INPUT_WIDTH;
-            cy = cy * image.rows / INPUT_HEIGHT;
-            w = w * image.cols / INPUT_WIDTH;
-            h = h * image.rows / INPUT_HEIGHT;
+            cx = cx * inputImage.cols / INPUT_WIDTH;
+            cy = cy * inputImage.rows / INPUT_HEIGHT;
+            w = w * inputImage.cols / INPUT_WIDTH;
+            h = h * inputImage.rows / INPUT_HEIGHT;
 
             // Proceed with the rest of your code
             int left = static_cast<int>(cx - w / 2);
@@ -77,10 +115,10 @@ int main() {
             int height = static_cast<int>(h);
 
             // Ensure coordinates are within image bounds
-            left = std::max(0, std::min(left, image.cols - 1));
-            top = std::max(0, std::min(top, image.rows - 1));
-            width = std::min(width, image.cols - left);
-            height = std::min(height, image.rows - top);
+            left = std::max(0, std::min(left, inputImage.cols - 1));
+            top = std::max(0, std::min(top, inputImage.rows - 1));
+            width = std::min(width, inputImage.cols - left);
+            height = std::min(height, inputImage.rows - top);
 
             // Add detection
             detections.push_back({cv::Rect(left, top, width, height), confidence});
@@ -108,7 +146,7 @@ int main() {
         Detection detection = detections[idx];
         std::cout << "Drawing box at: (" << detection.box.x << ", " << detection.box.y
                   << "), width: " << detection.box.width << ", height: " << detection.box.height << std::endl;
-        drawDetections(image, {detection});
+        drawDetections(inputImage, {detection});
     }
 
     std::vector<Detection> finalDetections;
@@ -124,11 +162,9 @@ int main() {
 
     // 绘制检测框并显示图像
     drawDetections(image, finalDetections);
-    cv::imshow("Detections", image);
+    cv::imshow("Detections", inputImage);
     cv::waitKey(0);
 
     return 0;
 }
-//
-// Created by zjc on 24-11-19.
 //
