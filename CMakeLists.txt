@@ -65,3 +65,7 @@ target_link_libraries(ui Qt6::Widgets)
 
 add_executable(onnx Matrox/onnx_running.cpp)
 target_link_libraries(onnx Qt6::Widgets ${MIL_LIBS})
+
+add_executable(opencv_onnx opencv_onnx.cpp)
+# 链接 OpenCV 和 Qt 库
+target_link_libraries(opencv_onnx Qt6::Widgets ${OpenCV_LIBS} comdlg32)
