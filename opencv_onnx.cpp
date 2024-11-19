@@ -16,6 +16,28 @@ struct Detection {
     cv::Rect box;
     float confidence;
 };
+class Timer {
+public:
+    Timer() : start_time(std::chrono::high_resolution_clock::now()) {}
+
+    // 重新启动定时器
+    void restart() {
+        start_time = std::chrono::high_resolution_clock::now();
+    }
+
+    // 获取并打印从上次启动到当前的时间差
+    void printElapsedTime(const std::string& message) {
+        auto end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end_time - start_time;
+        std::cout << message << ": " << elapsed.count() << " seconds" << std::endl;
+        // 重新启动定时器以供下次测量
+        start_time = end_time;
+    }
+
+private:
+    std::chrono::high_resolution_clock::time_point start_time;
+};
+
 
 // 在图像上绘制检测框
 void drawDetections(cv::Mat& inputImage, const std::vector<Detection>& detections) {
@@ -60,11 +82,15 @@ int main() {
     // 模型路径和图片路径
     std::string modelPath = "C:\\Users\\zjc\\Desktop\\dimo_11.14.onnx";
     std::string imagePath = "C:\\Users\\zjc\\Desktop\\dimo.bmp";
-
+    Timer timer1;
     // 加载模型
     cv::dnn::Net net = cv::dnn::readNetFromONNX(modelPath);
-
+    // net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA); // 设置为使用 CUDA 后端
+    // net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);   // 设置为在 GPU 上运行
+    timer1.printElapsedTime("Time to load the model");
     // 读取输入图像
+
+    timer1.restart();
     cv::Mat image = cv::imread(imagePath);
     if (image.empty()) {
         std::cerr << "Could not read the image: " << imagePath << std::endl;
@@ -79,12 +105,13 @@ int main() {
     cv::Mat inputImage = resizeAndPad(image, INPUT_WIDTH, INPUT_HEIGHT, padTop, padLeft, scale, padColor);
 
     // 显示调整和填充后的图像
-    cv::imshow("Resized and Padded Image", inputImage);
+    // cv::imshow("Resized and Padded Image", inputImage);
     // 预处理图像
     cv::Mat blob = cv::dnn::blobFromImage(inputImage, 1 / 255.0, cv::Size(INPUT_WIDTH, INPUT_HEIGHT), cv::Scalar(0, 0, 0), true, false);
     net.setInput(blob);
 
-
+    timer1.printElapsedTime("Time to preprocessing");
+    timer1.restart();
     // 推理模型
     cv::Mat output = net.forward();
 
@@ -162,6 +189,8 @@ int main() {
 
     // 绘制检测框并显示图像
     drawDetections(image, finalDetections);
+    timer1.printElapsedTime("Time to run inference");
+
     cv::imshow("Detections", inputImage);
     cv::waitKey(0);
 
