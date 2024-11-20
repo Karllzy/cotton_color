@@ -54,10 +54,24 @@ MIL_ID convert_to_uint8(MIL_ID input_img) {
     MIL_ID MilSystem = MbufInquire(input_img, M_OWNER_SYSTEM, M_NULL);
     MIL_INT size_x = MbufInquire(input_img, M_SIZE_X, M_NULL);
     MIL_INT size_y = MbufInquire(input_img, M_SIZE_Y, M_NULL);
+    MIL_INT channel_num = MbufInquire(input_img,  M_SIZE_BAND, M_NULL);
+
     MbufAlloc2d(MilSystem, size_x, size_y, 8 + M_UNSIGNED, M_IMAGE + M_PROC + M_DISP, &output_img);
-    MimArith(output_img, input_img, output_img, M_ADD);
-    MimArith(output_img, 255.0, output_img, M_MULT_CONST);
+    if(channel_num == 1) {
+        MimArith(output_img, input_img, output_img, M_ADD);
+        MimArith(output_img, 255.0, output_img, M_MULT_CONST);
+    } else if(channel_num == 3) {
+        MimConvert(input_img, output_img, M_RGB_TO_L);
+        MimArith(output_img, M_NULL, output_img, M_NOT);
+    } else {
+        cout << "Unsupported channel number!" << endl;
+    }
     return output_img;
+}
+
+
+wstring convert_to_wstring(const string& str) {
+    return wstring(str.begin(), str.end());
 }
 
 // 图片转换函数，输入4096*1024*3的图片，输出为(4096 / n_valves) * (1024 / n_merge_vertical) * 1

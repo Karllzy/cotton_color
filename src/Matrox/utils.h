@@ -32,4 +32,6 @@ std::vector<int> opencvLabToPsLab(const std::vector<int>& lab_cv);
 
 MIL_ID convert_to_uint8(MIL_ID input_img);
 
+std::wstring convert_to_wstring(const std::string& str);
+
 #endif //UTILS_H

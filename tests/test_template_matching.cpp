@@ -22,7 +22,7 @@ int main() {
     params["cotton_L_max"] = 90;
     params["cotton_a_min"] = -5;
     params["cotton_a_max"] = 6;
-    params["cotton_b_min"] = -5;
+    params["cotton_b_min"] = 0;
     params["cotton_b_max"] = 30;
 
     params["background_L_min"] = 95;
