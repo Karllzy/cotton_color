@@ -2,9 +2,9 @@ from model import Model
 
 # 初始化 Model 对象，实例化时自动生成并保存掩膜
 model = Model(
-    image_folder="runs/detect/exp6",
-    label_folder="runs/detect/labels",
-    output_folder="datasets/mask"
+    image_folder="",
+    label_folder="",
+    output_folder=""
 )
 
 # 读取某张图片对应的掩膜
