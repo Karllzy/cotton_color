@@ -48,7 +48,7 @@ int main() {
     // Measure execution time
     measure_execution_time([&]() {
         pre_process(MilImage, detection_result, params);
-        template_matching(detection_result, detection_result, params);
+        test_template_matching(detection_result, detection_result, params);
     });
     MbufSave(SAVE_PATH, detection_result);
     // Display result

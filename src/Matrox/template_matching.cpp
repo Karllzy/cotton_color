@@ -181,9 +181,18 @@ class TemplateMatcher {
 };
 
 
-void template_matching(const MIL_ID& inputImage, MIL_ID& outputImage, const map<string, int>& params) {
+void test_template_matching(const MIL_ID& inputImage, MIL_ID& outputImage, const map<string, int>& params) {
     // Create a TemplateMatcher instance
     TemplateMatcher matcher(MilSystem, MilDisplay);
+
+    //TODO: 1加入加载多个模板的功能
+    //TODO: 2加入配置文件解析功能，解析后的文件与当前的para map<string, int>兼容
+    //       配置文件当中加入是否显示参数，能调控加载模板的过程是否显示。
+    //TODO: 3修改当前的代码使模板匹配不出错
+    //TODO: 4成立模板文件夹，能够加载文件夹下的全部模板并实现检测
+    //TODO: 5制作标准结构的函数，例如：matcher.findModels(MIL_ID inputImage, MIL_ID output_image, map);
+    //TODO: 6完善相应部分的手册
+
 
     // Load template models
     vector<string>  template_paths = {"C:\\Users\\zjc\\Desktop\\template1.png",
