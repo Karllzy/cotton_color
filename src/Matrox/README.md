@@ -72,3 +72,15 @@ void hsv_process(const MIL_ID& inputImage, MIL_ID& outputImageHSV, const std::ma
 | lab_denoising = 1 |                   |                   | ![diguandai](./README.assets/diguandai.png) |
 | lab_denoising = 2 |                   |                   |                                             |
 
+
+这些是经过实验后的推荐参数：
+
+|        | L_min | L_max | a_min | a_max | b_min | b_max |
+| ------ | ----- | ----- | ----- | ----- | ----- | ----- |
+| green  | 27    | 49    | -27   | -8    | 2     | 12    |
+| blue   | 18    | 26    | 2     | 17    | -33   | -23   |
+| orange | 65    | 75    | 7     | 14    | 32    | 46    |
+| black  | 0     | 8     | -1    | 5     | -2    | 6     |
+| red    | 28    | 38    | 15    | 25    | -95   | 26    |
+| purple | 67    | 77    | 3     | 13    | -20   | -5    |
+

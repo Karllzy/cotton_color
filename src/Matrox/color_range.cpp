@@ -4,15 +4,10 @@
 #include <string>
 #include "utils.h"
 
-#define IMAGE_PATH MIL_TEXT("C:\\Users\\zjc\\Desktop\\cotton_image\\174.bmp")
-#define SAVE_PATH MIL_TEXT("C:\\Users\\zjc\\Desktop\\diguandai.png")
-
-
-// Global variables
-MIL_ID MilApplication = M_NULL, MilSystem = M_NULL, MilDisplay = M_NULL;
 
 // Optimized LabProcess function
-void lab_process(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std::map<std::string, int>& params)
+void lab_process_raw(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std::map<std::string, int>& params,
+    const std::vector<std::string>& color_vector)
 {
     MIL_ID MilLabImage = M_NULL, MilLChannel = M_NULL, MilAChannel = M_NULL, MilBChannel = M_NULL;
     MIL_ID lab_result=M_NULL;
@@ -56,11 +51,11 @@ void lab_process(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std::ma
     MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &MilBinaryB);
     MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &MilResultLab);
     MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &lab_result);
-    const std::vector<std::string> colors = {"green", "blue", "orange", "black", "red", "purple"};
+
 
     // Iterate over colors
     // 遍历颜色
-    for (const auto& color : colors) {
+    for (const auto& color : color_vector) {
         // 构建参数键
         std::string L_min_key = color + "_L_min";
         std::string L_max_key = color + "_L_max";
@@ -76,6 +71,18 @@ void lab_process(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std::ma
         int a_max = params.at(a_max_key);
         int b_min = params.at(b_min_key);
         int b_max = params.at(b_max_key);
+        std::vector<int> lab_min_ps = {L_min, a_min, b_min};
+        std::vector<int> lab_max_ps = {L_max, a_max, b_max};
+
+        std::vector<int> lab_min_cv = psLabToOpenCVLab(lab_min_ps);
+        std::vector<int> lab_max_cv = psLabToOpenCVLab(lab_max_ps);
+
+        L_min = lab_min_cv[0];
+        L_max = lab_max_cv[0];
+        a_min = lab_min_cv[1];
+        a_max = lab_max_cv[1];
+        b_min = lab_min_cv[2];
+        b_max = lab_max_cv[2];
 
         // 对每个通道进行二值化
         MimBinarize(MilLChannel, MilBinaryL, M_IN_RANGE, L_min, L_max);
@@ -106,6 +113,13 @@ void lab_process(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std::ma
     MbufFree(MilLabImage);
     MbufFree(lab_result);
 }
+
+
+void lab_process(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std::map<std::string, int>& params) {
+    const std::vector<std::string> colors = {"green", "blue", "orange", "black", "red", "purple"};
+    lab_process_raw(inputImage, outputImageLab, params, colors);
+}
+
 
 void hsv_process(const MIL_ID& inputImage, MIL_ID& outputImageHSV, const std::map<std::string, int>& params)
 {
@@ -142,13 +156,13 @@ void hsv_process(const MIL_ID& inputImage, MIL_ID& outputImageHSV, const std::ma
 
     // 分配输出图像缓冲区
     MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-        MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
+        MbufInquire(inputImage, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
         M_IMAGE + M_PROC + M_DISP, &hsv_result);
     MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-    MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
+    MbufInquire(inputImage, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
     M_IMAGE + M_PROC + M_DISP, &hsv_denoising);
     MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-    MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
+    MbufInquire(inputImage, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
     M_IMAGE + M_PROC + M_DISP, &outputImageHSV);
 
     // 对 S 通道进行阈值分割
@@ -167,6 +181,7 @@ void hsv_process(const MIL_ID& inputImage, MIL_ID& outputImageHSV, const std::ma
     MbufFree(hsv_denoising);
 }
 
+
 void high_sat_detect(const MIL_ID& inputImage, MIL_ID& outputImage, const std::map<std::string, int>& params) {
     MIL_ID output_hsv=M_NULL, output_lab=M_NULL;
 
@@ -184,81 +199,4 @@ void high_sat_detect(const MIL_ID& inputImage, MIL_ID& outputImage, const std::m
     MbufFree(output_hsv);
 }
 
-int main()
-{
-    // Initialize MIL application
-    MappAllocDefault(M_DEFAULT, &MilApplication, &MilSystem, &MilDisplay, M_NULL,
-        M_NULL);
 
-    // Load input image
-    MIL_ID MilImage = M_NULL;
-    MbufRestore(IMAGE_PATH, MilSystem, &MilImage);
-
-    // Define color ranges
-    std::map<std::string, int> params;
-    params["green_L_min"] = 68;
-    params["green_L_max"] = 125;
-    params["green_a_min"] = 101;
-    params["green_a_max"] = 120;
-    params["green_b_min"] = 130;
-    params["green_b_max"] = 140;
-
-    params["blue_L_min"] = 45;
-    params["blue_L_max"] = 66;
-    params["blue_a_min"] = 130;
-    params["blue_a_max"] = 145;
-    params["blue_b_min"] = 95;
-    params["blue_b_max"] = 105;
-
-    params["orange_L_min"] = 166;
-    params["orange_L_max"] = 191;
-    params["orange_a_min"] = 135;
-    params["orange_a_max"] = 142;
-    params["orange_b_min"] = 160;
-    params["orange_b_max"] = 174;
-
-    params["black_L_min"] = 0;
-    params["black_L_max"] = 21;
-    params["black_a_min"] = 127;
-    params["black_a_max"] = 133;
-    params["black_b_min"] = 126;
-    params["black_b_max"] = 134;
-
-    params["red_L_min"] = 71;
-    params["red_L_max"] = 97;
-    params["red_a_min"] = 143;
-    params["red_a_max"] = 153;
-    params["red_b_min"] = 33;
-    params["red_b_max"] = 154;
-
-    params["purple_L_min"] = 171;
-    params["purple_L_max"] = 197;
-    params["purple_a_min"] = 131;
-    params["purple_a_max"] = 141;
-    params["purple_b_min"] = 108;
-    params["purple_b_max"] = 123;
-    params["lab_denoising"] = 1;
-
-    params["saturation_threshold"] = 150;
-    params["saturation_denoising"] = 1;
-
-    // Initialize combined result
-    MIL_ID detection_result = M_NULL;
-
-    // Measure execution time
-    measure_execution_time([&]() {
-        high_sat_detect(MilImage, detection_result, params);
-    });
-    MbufSave(SAVE_PATH, detection_result);
-    // Display result
-
-    std::cout << "所有颜色检测已完成并合并。按 <Enter> 退出。" << std::endl;
-    getchar();
-
-    // Free resources
-    MbufFree(detection_result);
-    MbufFree(MilImage);
-    MappFreeDefault(MilApplication, MilSystem, MilDisplay, M_NULL, M_NULL);
-
-    return 0;
-}

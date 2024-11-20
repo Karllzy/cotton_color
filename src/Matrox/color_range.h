@@ -60,7 +60,10 @@ void hsv_process(const MIL_ID& inputImage, MIL_ID& outputImageHSV, const std::ma
 // params["purple_b_max"] = 123;
 //
 
+void lab_process_raw(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std::map<std::string, int>& params,
+    const std::vector<std::string>& color_vector);
+// 新增了可自定义的色彩矩阵
 
-
+void high_sat_detect(const MIL_ID& inputImage, MIL_ID& outputImage, const std::map<std::string, int>& params);
 
 #endif //COLOR_RANGE_H

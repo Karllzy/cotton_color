@@ -13,9 +13,9 @@
 #include <vector>
 
 // Path definitions.
-#define EXAMPLE_ONNX_MODEL_PATH  MIL_TEXT("C:\\Users\\zjc\\source\\repos\\cotton_color\\Matrox\\models\\2024_11_12_imgsz640_batch1.onnx")
-#define TARGET_IMAGE_DIR_PATH    MIL_TEXT("C:\\Users\\zjc\\Desktop\\dimo2.mim")
-#define IMAGE_FILE               MIL_TEXT("C:\\Users\\zjc\\Desktop\\dimo2.bmp")
+#define EXAMPLE_ONNX_MODEL_PATH  MIL_TEXT("C:\\Users\\zjc\\Desktop\\WeChat Files\\wxid_ipl8u0ctajtn22\\FileStorage\\File\\2024-11\\2024_11_12_imgsz640_batch1(1).onnx")
+#define TARGET_IMAGE_DIR_PATH    MIL_TEXT("C:\\Users\\zjc\\Desktop\\dimo4.mim")
+
 
 int MosMain(void)
 {
@@ -31,14 +31,6 @@ int MosMain(void)
     MsysAlloc(M_DEFAULT, M_SYSTEM_DEFAULT, M_DEFAULT, M_DEFAULT, &MilSystem);
     MdispAlloc(MilSystem, M_DEFAULT, MIL_TEXT("M_DEFAULT"), M_DEFAULT, &MilDisplay);
 
-    MIL_UNIQUE_BUF_ID dimo2;
-    MbufImport(IMAGE_FILE, M_DEFAULT, M_RESTORE+M_NO_GRAB+M_NO_COMPRESS, MilSystem, &dimo2);
-    //MIL_UNIQUE_BUF_ID MimArithdestination = MbufClone(dimo2, M_DEFAULT, M_DEFAULT, M_DEFAULT, M_DEFAULT, M_DEFAULT, M_DEFAULT, M_UNIQUE_ID);
-    MIL_UNIQUE_BUF_ID MimArithDestination = MbufAllocColor(MilSystem, 3, 640, 640, 32 + M_FLOAT, M_IMAGE + M_PROC, M_UNIQUE_ID);
-    // Post-Alloc Block for MimArith's destination
-    MbufClear(MimArithDestination, M_COLOR_BLACK);
-
-    MimArith(dimo2, 255.0, MimArithDestination, M_DIV_CONST);
 
     // Load the image into memory.
     if (MbufRestore(TARGET_IMAGE_DIR_PATH, MilSystem, &MilImage) != M_NULL)
@@ -51,7 +43,6 @@ int MosMain(void)
         return 1;  // Exit if the image loading failed
     }
 
-    MdispSelect(MilDisplay, MimArithDestination);
 
     // MbufInquire(MilImage, , NULL);
 
@@ -70,7 +61,7 @@ int MosMain(void)
 
 
     // Perform object detection on the image using MclassPredict.
-    MclassPredict(DetectCtx, MimArithDestination, DetectRes, M_DEFAULT);
+    MclassPredict(DetectCtx, MilImage, DetectRes, M_DEFAULT);
 
 
     MosPrintf(MIL_TEXT("Object detection completed.\n"));
