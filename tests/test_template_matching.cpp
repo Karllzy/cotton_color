@@ -19,7 +19,7 @@ int main() {
     using namespace std;
 
     std::map<std::string, int> params;
-    read_params_from_file("C:\\Users\\zjc\\Desktop\\config\\config.txt", params);
+    read_params_from_file("C:\\Users\\zjc\\Desktop\\config\\template_config.txt", params);
     // Initialize MIL application
     MappAllocDefault(M_DEFAULT, &MilApplication, &MilSystem, &MilDisplay, M_NULL,
         M_NULL);
@@ -30,12 +30,16 @@ int main() {
 
     // Initialize combined result
     MIL_ID detection_result = M_NULL;
+    MIL_ID output_Image= M_NULL;
+    TemplateMatcher matcher(MilSystem, MilDisplay, params);
 
     // Measure execution time
     measure_execution_time([&]()
         {
         pre_process(MilImage, detection_result, params);
-        test_template_matching(detection_result, detection_result, params);
+        matcher.LoadTemplate(matcher,params);
+        matcher.FindTemplates(detection_result,output_Image,matcher);
+        //最后的释放问题应该出在寻找模板里面
     });
     MbufSave(SAVE_PATH, detection_result);
     // Display result

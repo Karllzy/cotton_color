@@ -84,3 +84,10 @@ void hsv_process(const MIL_ID& inputImage, MIL_ID& outputImageHSV, const std::ma
 | red    | 28    | 38    | 15    | 25    | -95   | 26    |
 | purple | 67    | 77    | 3     | 13    | -20   | -5    |
 
+
+### utils模块包含的工具函数
+1.模型图片路径格式转换
+2.uint1转uint8图片函数
+3.ps和opencv阈值相互转换函数
+4.读取配置文件函数
+
