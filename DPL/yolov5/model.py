@@ -4,7 +4,7 @@ import numpy as np
 import time
 
 class Model:
-    def __init__(self, image_folder, label_folder, output_folder, width_blocks=24, height_blocks=24):
+    def __init__(self, image_folder, label_folder, output_folder, block_size_x=24, block_size_y=24):
         """
         初始化 Model 类，并自动生成并保存掩膜
         :param image_folder: 输入图像文件夹路径
@@ -16,8 +16,8 @@ class Model:
         self.image_folder = image_folder
         self.label_folder = label_folder
         self.output_folder = output_folder
-        self.width_blocks = width_blocks
-        self.height_blocks = height_blocks
+        self.width_blocks = block_size_x
+        self.height_blocks = block_size_y
 
         # 确保输出文件夹存在
         if not os.path.exists(self.output_folder):

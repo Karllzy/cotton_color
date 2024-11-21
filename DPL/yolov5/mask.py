@@ -4,7 +4,9 @@ from model import Model
 model = Model(
     image_folder="",
     label_folder="",
-    output_folder=""
+    output_folder="",
+    block_size_x=24,
+    block_size_y=24
 )
 
 # 读取某张图片对应的掩膜
