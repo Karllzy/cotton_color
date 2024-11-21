@@ -32,10 +32,12 @@ class TemplateMatcher {
 
         bool isInitialized;
 
+        map<string, int> param;
+
     public:
     // Constructor
-    TemplateMatcher(MIL_ID system, MIL_ID display):
-            isInitialized(false) {}
+    TemplateMatcher(MIL_ID system, MIL_ID display, map<string, int>& param):
+            isInitialized(false) {this->param = param;}
 
     // Destructor: Free MIL objects
     ~TemplateMatcher() {
@@ -75,11 +77,15 @@ class TemplateMatcher {
             MIL_ID template_temporary;
             MbufRestore(convert_to_wstring(ModelImgPaths[i]), MilSystem, &template_temporary);
             MIL_ID template_temporary_uint8 = convert_to_uint8(template_temporary);
-            MdispSelect(MilDisplay, template_temporary_uint8);
+            if (this->param["isdisplay"] == 1)
+            {
+                MdispSelect(MilDisplay, template_temporary_uint8);
+            }
             /* Allocate a graphic list to hold the subpixel annotations to draw. */
             MgraAllocList(MilSystem, M_DEFAULT, &GraphicList);
             /* Associate the graphic list to the display for annotations. */
             MdispControl(MilDisplay, M_ASSOCIATED_GRAPHIC_LIST_ID, GraphicList);
+
 
 
 
@@ -88,6 +94,16 @@ class TemplateMatcher {
                        static_cast<MIL_DOUBLE>(ModelsOffsetY[i]),
                        static_cast<MIL_DOUBLE>(ModelsSizeX[i]),
                        static_cast<MIL_DOUBLE>(ModelsSizeY[i]));
+
+            MgraColor(M_DEFAULT, ModelsDrawColor[i]);
+            MmodDraw( M_DEFAULT, MilSearchContext, GraphicList,
+                          M_DRAW_BOX+M_DRAW_POSITION, i, M_ORIGINAL);
+            if (this->param["isdisplay"] == 1)
+            {
+                MosGetch();
+            }
+            MbufFree(template_temporary);
+            MbufFree(template_temporary_uint8);
         }
 
         // 设置一些参数
@@ -111,19 +127,20 @@ class TemplateMatcher {
         cout << "Templates loaded and preprocessed successfully.\n";
 
         /* Draw boxes and positions in the source image to identify the models. */
-        for (int i=0; i<ModelImgPaths.size(); i++)
-        {
-            MgraColor(M_DEFAULT, ModelsDrawColor[i]);
-            MmodDraw( M_DEFAULT, MilSearchContext, GraphicList,
-                      M_DRAW_BOX+M_DRAW_POSITION, i, M_ORIGINAL);
-        }
+        // for (int i=0; i<ModelImgPaths.size(); i++)
+        // {
+        //     MgraColor(M_DEFAULT, ModelsDrawColor[i]);
+        //     MmodDraw( M_DEFAULT, MilSearchContext, GraphicList,
+        //               M_DRAW_BOX+M_DRAW_POSITION, i, M_ORIGINAL);
+        // }
 
         /* Pause to show the models. */
         MosPrintf(MIL_TEXT("A model context was defined with the ")
                        MIL_TEXT("models in the displayed image.\n"));
         MosPrintf(MIL_TEXT("Press <Enter> to continue.\n\n"));
-        MosGetch();
-
+        if (this->param["debug_mode"] == 1) {
+            MosGetch();
+        }
     }
 
     // Search for models in the input image
@@ -173,22 +190,30 @@ class TemplateMatcher {
                 MgraColor(M_DEFAULT, ModelsDrawColor[Models[i]]);
                 MmodDraw(M_DEFAULT, MilResult, GraphicList,
                          M_DRAW_EDGES + M_DRAW_POSITION, i, M_DEFAULT);
+
             }
         } else {
             cout << "No models found.\n";
         }
+        MosPrintf(MIL_TEXT("Press <Enter> to EXIT.\n\n"));
+        MosGetch();
+
+
+        MbufFree(input_image_uint8);
     }
+
 };
 
 
-void test_template_matching(const MIL_ID& inputImage, MIL_ID& outputImage, const map<string, int>& params) {
+void test_template_matching(const MIL_ID &inputImage, MIL_ID &outputImage, map<string, int> &params)
+{
     // Create a TemplateMatcher instance
-    TemplateMatcher matcher(MilSystem, MilDisplay);
+    TemplateMatcher matcher(MilSystem, MilDisplay, params);
 
-    //TODO: 1加入加载多个模板的功能
+    //TODO: 1加入加载多个模板的功能   已
     //TODO: 2加入配置文件解析功能，解析后的文件与当前的para map<string, int>兼容
-    //       配置文件当中加入是否显示参数，能调控加载模板的过程是否显示。
-    //TODO: 3修改当前的代码使模板匹配不出错
+    //       配置文件当中加入是否显示参数，能调控加载模板的过程是否显示。已
+    //TODO: 3修改当前的代码使模板匹配不出错  已
     //TODO: 4成立模板文件夹，能够加载文件夹下的全部模板并实现检测
     //TODO: 5制作标准结构的函数，例如：matcher.findModels(MIL_ID inputImage, MIL_ID output_image, map);
     //TODO: 6完善相应部分的手册
@@ -196,8 +221,8 @@ void test_template_matching(const MIL_ID& inputImage, MIL_ID& outputImage, const
 
     // Load template models
     vector<string>  template_paths = {"C:\\Users\\zjc\\Desktop\\template1.png",
-        "C:\\Users\\zjc\\Desktop\\template1.png",
-        "C:\\Users\\zjc\\Desktop\\template1.png",
+        "C:\\Users\\zjc\\Desktop\\template2.png",
+        "C:\\Users\\zjc\\Desktop\\template3.png",
     };
     vector<MIL_INT> offsetX = {0, 20, 30};
     vector<MIL_INT> offsetY = {0, 20, 30};
@@ -209,7 +234,10 @@ void test_template_matching(const MIL_ID& inputImage, MIL_ID& outputImage, const
     // Find models
     matcher.findModels(inputImage);
 
+
     // Free resources
-    MappFreeDefault(MilApplication, MilSystem, M_NULL, M_NULL, MilDisplay);
+    //
 }
+
+
 

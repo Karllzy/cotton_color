@@ -7,4 +7,5 @@
 void pre_process(const MIL_ID& inputImage, MIL_ID& outputImageSuspect, const std::map<std::string, int>& params);
 
 void template_matching(const MIL_ID& inputImageSuspect, MIL_ID& outputImage, const std::map<std::string, int>& params);
+void test_template_matching(const MIL_ID &inputImage, MIL_ID &outputImage, std::map<std::string, int> &params) ;
 #endif //TEMPLATE_MATCHING_H

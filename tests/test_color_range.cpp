@@ -23,51 +23,7 @@ int main()
 
     // Define color ranges
     std::map<std::string, int> params;
-    params["green_L_min"] = 27;
-    params["green_L_max"] = 49;
-    params["green_a_min"] = -27;
-    params["green_a_max"] = -8;
-    params["green_b_min"] = 2;
-    params["green_b_max"] = 12;
-
-    params["blue_L_min"] = 18;
-    params["blue_L_max"] = 26;
-    params["blue_a_min"] = 2;
-    params["blue_a_max"] = 17;
-    params["blue_b_min"] = -33;
-    params["blue_b_max"] = -23;
-
-    params["orange_L_min"] = 65;
-    params["orange_L_max"] = 75;
-    params["orange_a_min"] = 7;
-    params["orange_a_max"] = 14;
-    params["orange_b_min"] = 32;
-    params["orange_b_max"] = 46;
-
-    params["black_L_min"] = 0;
-    params["black_L_max"] = 8;
-    params["black_a_min"] = -1;
-    params["black_a_max"] = 5;
-    params["black_b_min"] = -2;
-    params["black_b_max"] = 6;
-
-    params["red_L_min"] = 28;
-    params["red_L_max"] = 38;
-    params["red_a_min"] = 15;
-    params["red_a_max"] = 25;
-    params["red_b_min"] = -95;
-    params["red_b_max"] = 26;
-
-    params["purple_L_min"] = 67;
-    params["purple_L_max"] = 77;
-    params["purple_a_min"] = 3;
-    params["purple_a_max"] = 13;
-    params["purple_b_min"] = -20;
-    params["purple_b_max"] = -5;
-    params["lab_denoising"] = 1;
-
-    params["saturation_threshold"] = 150;
-    params["saturation_denoising"] = 1;
+    read_params_from_file("C:\\Users\\zjc\\Desktop\\config\\color_range_config.txt", params);
 
     // Initialize combined result
     MIL_ID detection_result = M_NULL;

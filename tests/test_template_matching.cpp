@@ -17,23 +17,9 @@ MIL_ID MilApplication = M_NULL, MilSystem = M_NULL, MilDisplay = M_NULL;
 
 int main() {
     using namespace std;
-    map<string, int> params;
-    params["cotton_L_min"] = 40;
-    params["cotton_L_max"] = 90;
-    params["cotton_a_min"] = -5;
-    params["cotton_a_max"] = 6;
-    params["cotton_b_min"] = 0;
-    params["cotton_b_max"] = 30;
 
-    params["background_L_min"] = 95;
-    params["background_L_max"] = 100;
-    params["background_a_min"] = -3;
-    params["background_a_max"] = 3;
-    params["background_b_min"] = -3;
-    params["background_b_max"] = 3;
-
-    params["cotton_denoising"] = 1;
-
+    std::map<std::string, int> params;
+    read_params_from_file("C:\\Users\\zjc\\Desktop\\config\\config.txt", params);
     // Initialize MIL application
     MappAllocDefault(M_DEFAULT, &MilApplication, &MilSystem, &MilDisplay, M_NULL,
         M_NULL);
@@ -46,7 +32,8 @@ int main() {
     MIL_ID detection_result = M_NULL;
 
     // Measure execution time
-    measure_execution_time([&]() {
+    measure_execution_time([&]()
+        {
         pre_process(MilImage, detection_result, params);
         test_template_matching(detection_result, detection_result, params);
     });
@@ -56,9 +43,10 @@ int main() {
     std::cout << "所有颜色检测已完成并合并。按 <Enter> 退出。" << std::endl;
     getchar();
 
-    // Free resources
+
+
     MbufFree(detection_result);
     MbufFree(MilImage);
-    MappFreeDefault(MilApplication, MilSystem, MilDisplay, M_NULL, M_NULL);
+
     return 0;
 }

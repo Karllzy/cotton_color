@@ -9,6 +9,10 @@
 #include <iostream>
 #include <vector>
 #include <Mil.h>
+#include <fstream>
+#include <string>
+#include <map>
+#include <sstream>
 
 // 声明全局变量（注意：这里只是声明，不是定义）
 extern __int64 MilApplication;
@@ -33,5 +37,6 @@ std::vector<int> opencvLabToPsLab(const std::vector<int>& lab_cv);
 MIL_ID convert_to_uint8(MIL_ID input_img);
 
 std::wstring convert_to_wstring(const std::string& str);
+void read_params_from_file(const std::string& filename, std::map<std::string, int>& params) ;
 
 #endif //UTILS_H

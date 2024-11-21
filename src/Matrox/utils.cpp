@@ -74,4 +74,49 @@ wstring convert_to_wstring(const string& str) {
     return wstring(str.begin(), str.end());
 }
 
+
+
+void read_params_from_file(const std::string& filename, std::map<std::string, int>& params) {
+    std::ifstream infile(filename);
+    if (!infile) {
+        std::cerr << "无法打开文件: " << filename << std::endl;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(infile, line)) {
+        // 去除行首和行尾的空白字符
+        line.erase(0, line.find_first_not_of(" \t\r\n"));
+        line.erase(line.find_last_not_of(" \t\r\n") + 1);
+
+        // 跳过空行和注释行
+        if (line.empty() || line[0] == '#')
+            continue;
+
+        // 查找等号的位置
+        size_t pos = line.find('=');
+        if (pos == std::string::npos)
+            continue; // 如果没有等号，跳过该行
+
+        // 分割键和值，并去除空白字符
+        std::string key = line.substr(0, pos);
+        std::string value_str = line.substr(pos + 1);
+        key.erase(0, key.find_first_not_of(" \t"));
+        key.erase(key.find_last_not_of(" \t") + 1);
+        value_str.erase(0, value_str.find_first_not_of(" \t"));
+        value_str.erase(value_str.find_last_not_of(" \t") + 1);
+
+        // 将字符串转换为整数
+        int value;
+        std::istringstream iss(value_str);
+        if (!(iss >> value)) {
+            std::cerr << "键 " << key << " 的值无效: " << value_str << std::endl;
+            continue;
+        }
+
+        // 将键值对添加到参数映射中
+        params[key] = value;
+    }
+}
+
 // 图片转换函数，输入4096*1024*3的图片，输出为(4096 / n_valves) * (1024 / n_merge_vertical) * 1
