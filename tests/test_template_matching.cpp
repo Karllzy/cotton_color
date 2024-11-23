@@ -47,8 +47,6 @@ int main() {
     std::cout << "所有颜色检测已完成并合并。按 <Enter> 退出。" << std::endl;
     getchar();
 
-
-
     MbufFree(detection_result);
     MbufFree(MilImage);
 
