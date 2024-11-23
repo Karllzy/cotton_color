@@ -18,6 +18,7 @@ private:
     MIL_ID MilSearchContext;
     MIL_ID MilResult;
     MIL_ID GraphicList;
+#define SAVE_PATH2 MIL_TEXT("C:\\Users\\zjc\\Desktop\\detection.png")
 
     std::vector<std::string> ModelImgPaths;
     std::vector<MIL_INT> ModelsOffsetX;
@@ -43,11 +44,11 @@ public:
                        const std::vector<MIL_DOUBLE>& drawColor);
 
     // Search for models in the input image
-    void findModels(const MIL_ID& inputImage);
+void findModels(const MIL_ID& inputImage,MIL_ID& outputImage);
 
     void LoadTemplate(TemplateMatcher &matcher, std::map<std::string, int> &params);
 
-    void FindTemplates(const MIL_ID &inputImage, const MIL_ID &outputImage, TemplateMatcher &matcher);
+    void FindTemplates(const MIL_ID &inputImage, MIL_ID &outputImage, TemplateMatcher &matcher);
 
 
     // Destructor

@@ -112,7 +112,7 @@ void TemplateMatcher::loadTemplates(const std::vector<std::string>& template_pat
 }
 
 // Search for models in the input image
-void TemplateMatcher::findModels(const MIL_ID& inputImage)
+void TemplateMatcher::findModels(const MIL_ID& inputImage,MIL_ID& outputImage)
 {
     if (!isInitialized) {
         std::cerr << "Templates are not loaded. Please load templates before searching.\n";
@@ -147,6 +147,13 @@ void TemplateMatcher::findModels(const MIL_ID& inputImage)
         MmodGetResult(MilResult, M_DEFAULT, M_SCALE, Scale.data());
         MmodGetResult(MilResult, M_DEFAULT, M_SCORE, Score.data());
 
+        // Create a binary image buffer
+        MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
+              MbufInquire(inputImage, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
+              M_IMAGE + M_PROC, &outputImage);
+        // Initialize the binary image to black
+        MbufClear(outputImage, 0);
+
         // Display results
         std::cout << "Found " << NumResults << " model(s) in " << Time * 1000.0 << " ms:\n";
         std::cout << "Result   Model   X Position   Y Position   Angle   Scale   Score\n";
@@ -155,11 +162,20 @@ void TemplateMatcher::findModels(const MIL_ID& inputImage)
                       << YPosition[i] << "        " << Angle[i] << "        " << Scale[i]
                       << "        " << Score[i] << "%\n";
 
-            // Draw results
+            // Draw results onto the binary image
+            MgraColor(M_DEFAULT, 255); // White color for binary image
+            MmodDraw(M_DEFAULT, MilResult, outputImage, M_DRAW_EDGES + M_DRAW_POSITION, i, M_DEFAULT);
+
+            // Draw results on the graphical list for display
             MgraColor(M_DEFAULT, ModelsDrawColor[Models[i]]);
             MmodDraw(M_DEFAULT, MilResult, GraphicList,
                      M_DRAW_EDGES + M_DRAW_POSITION, i, M_DEFAULT);
         }
+
+        // Display or save the binary image
+
+        MbufSave(SAVE_PATH2, outputImage);
+
     } else {
         std::cout << "No models found.\n";
     }
@@ -167,6 +183,7 @@ void TemplateMatcher::findModels(const MIL_ID& inputImage)
     MosGetch();
     MbufFree(input_image_uint8);
 }
+
 void TemplateMatcher::LoadTemplate(TemplateMatcher& matcher, std::map<std::string, int> &params)
 {
     // Create a TemplateMatcher instance (consider making it static if you want to retain it between calls)
@@ -189,10 +206,10 @@ void TemplateMatcher::LoadTemplate(TemplateMatcher& matcher, std::map<std::strin
     );
 }
 
-void TemplateMatcher::FindTemplates( const MIL_ID& inputImage,const MIL_ID& outputImage,TemplateMatcher& matcher)
+void TemplateMatcher::FindTemplates( const MIL_ID& inputImage, MIL_ID& outputImage,TemplateMatcher& matcher)
 {
     // Perform template matching
-    matcher.findModels(inputImage);
+    matcher.findModels(inputImage,outputImage);
 
     // Notify user that matching is complete
     cout << "Template matching completed.\n";
