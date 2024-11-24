@@ -34,6 +34,8 @@ int main() {
     // Initialize combined result
     MIL_ID detection_result = M_NULL;
     MIL_ID detection_resize = M_NULL;
+
+
     MIL_ID output_Image= M_NULL;
     TemplateMatcher matcher(MilSystem, MilDisplay, params);
 
@@ -47,7 +49,7 @@ int main() {
         MimResize(detection_result,detection_resize,0.5,0.5,M_DEFAULT);
 
         matcher.LoadTemplate(matcher,params);
-        matcher.FindTemplates(detection_result,output_Image,matcher);
+        matcher.FindTemplates(detection_resize,output_Image,matcher);
         //最后的释放问题应该出在寻找模板里面
     });
     MbufSave(SAVE_PATH, detection_result);
