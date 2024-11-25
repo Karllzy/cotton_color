@@ -198,10 +198,10 @@ void TemplateMatcher::LoadTemplate(TemplateMatcher& matcher, std::map<std::strin
             "C:\\Users\\zjc\\Desktop\\templates\\template5.png",
             "C:\\Users\\zjc\\Desktop\\templates\\template6.png",
         },
-        {0, 20, 30, 10,10,10},  // offsetX
-        {0, 20, 30, 10,10,10},  // offsetY
-        {100, 60, 60, 66,66,66}, // sizeX
-        {100, 60, 60, 66,66,66}, // sizeY
+        {0, 0, 0, 0,0,0},  // offsetX
+        {0, 0, 0, 0,0,0},  // offsetY
+        {100, 80, 200, 96,96,96}, // sizeX
+        {100, 80, 86, 96,96,96}, // sizeY
         {M_COLOR_RED, M_COLOR_GREEN, M_COLOR_BLUE, M_COLOR_GREEN,M_COLOR_BLUE,M_COLOR_BLUE} // drawColor
     );
 }
@@ -215,11 +215,8 @@ void TemplateMatcher::FindTemplates( const MIL_ID& inputImage, MIL_ID& outputIma
     cout << "Template matching completed.\n";
 }
 
-//TODO: 1加入加载多个模板的功能   已
-//TODO: 2加入配置文件解析功能，解析后的文件与当前的para map<string, int>兼容
-//       配置文件当中加入是否显示参数，能调控加载模板的过程是否显示。已
-//TODO: 3修改当前的代码使模板匹配不出错  已
-//TODO: 4成立模板文件夹，能够加载文件夹下的全部模板并实现检测 已
+//TODO: 1加入加载多个模板的功能   已 + 加入配置文件
+
 //TODO: 5制作标准结构的函数，例如：matcher.findModels(MIL_ID inputImage, MIL_ID output_image, map);
 ////未实现，因为加载和寻找分开后，要对加载和寻找函数传入类成员，无法统一，其余可用到的参数统一，加一个类成员即可。
 //TODO: 6完善相应部分的手册 已

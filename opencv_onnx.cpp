@@ -85,8 +85,8 @@ int main() {
     Timer timer1;
     // 加载模型
     cv::dnn::Net net = cv::dnn::readNetFromONNX(modelPath);
-    // net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA); // 设置为使用 CUDA 后端
-    // net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);   // 设置为在 GPU 上运行
+    net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA); // 设置为使用 CUDA 后端
+    net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);   // 设置为在 GPU 上运行
     timer1.printElapsedTime("Time to load the model");
     // 读取输入图像
 
@@ -112,85 +112,86 @@ int main() {
 
     timer1.printElapsedTime("Time to preprocessing");
     timer1.restart();
-    // 推理模型
-    cv::Mat output = net.forward();
+    for(int j = 0; j <30; j++) {
+        // 推理模型
+        cv::Mat output = net.forward();
 
-    // 处理输出数据
-    std::vector<Detection> detections;
-    float* data = (float*)output.data;
-    for (int i = 0; i < 25200; ++i) {
-        float confidence = data[i * 6 + 4]; // 置信度
-        if (confidence >= CONFIDENCE_THRESHOLD) {
-            // 获取检测框并映射到图像坐标
-            // Remove the unnecessary multiplication
-            float cx = data[i * 6];
-            float cy = data[i * 6 + 1];
-            float w = data[i * 6 + 2];
-            float h = data[i * 6 + 3];
+        // 处理输出数据
+        std::vector<Detection> detections;
+        float* data = (float*)output.data;
+        for (int i = 0; i < 25200; ++i) {
+            float confidence = data[i * 6 + 4]; // 置信度
+            if (confidence >= CONFIDENCE_THRESHOLD) {
+                // 获取检测框并映射到图像坐标
+                // Remove the unnecessary multiplication
+                float cx = data[i * 6];
+                float cy = data[i * 6 + 1];
+                float w = data[i * 6 + 2];
+                float h = data[i * 6 + 3];
 
-            // If needed, adjust for differences between input image size and model input size
-            // Since they are the same in your case, this step can be omitted or kept as is
-            cx = cx * inputImage.cols / INPUT_WIDTH;
-            cy = cy * inputImage.rows / INPUT_HEIGHT;
-            w = w * inputImage.cols / INPUT_WIDTH;
-            h = h * inputImage.rows / INPUT_HEIGHT;
+                // If needed, adjust for differences between input image size and model input size
+                // Since they are the same in your case, this step can be omitted or kept as is
+                cx = cx * inputImage.cols / INPUT_WIDTH;
+                cy = cy * inputImage.rows / INPUT_HEIGHT;
+                w = w * inputImage.cols / INPUT_WIDTH;
+                h = h * inputImage.rows / INPUT_HEIGHT;
 
-            // Proceed with the rest of your code
-            int left = static_cast<int>(cx - w / 2);
-            int top = static_cast<int>(cy - h / 2);
-            int width = static_cast<int>(w);
-            int height = static_cast<int>(h);
+                // Proceed with the rest of your code
+                int left = static_cast<int>(cx - w / 2);
+                int top = static_cast<int>(cy - h / 2);
+                int width = static_cast<int>(w);
+                int height = static_cast<int>(h);
 
-            // Ensure coordinates are within image bounds
-            left = std::max(0, std::min(left, inputImage.cols - 1));
-            top = std::max(0, std::min(top, inputImage.rows - 1));
-            width = std::min(width, inputImage.cols - left);
-            height = std::min(height, inputImage.rows - top);
+                // Ensure coordinates are within image bounds
+                left = std::max(0, std::min(left, inputImage.cols - 1));
+                top = std::max(0, std::min(top, inputImage.rows - 1));
+                width = std::min(width, inputImage.cols - left);
+                height = std::min(height, inputImage.rows - top);
 
-            // Add detection
-            detections.push_back({cv::Rect(left, top, width, height), confidence});
+                // Add detection
+                detections.push_back({cv::Rect(left, top, width, height), confidence});
 
+            }
         }
-    }
 
 
 
-    // 非极大值抑制
-    std::vector<int> indices;
-    std::vector<cv::Rect> boxes;
-    std::vector<float> scores;
-    for (const auto& detection : detections) {
-        boxes.push_back(detection.box);
+        // 非极大值抑制
+        std::vector<int> indices;
+        std::vector<cv::Rect> boxes;
+        std::vector<float> scores;
+        for (const auto& detection : detections) {
+            boxes.push_back(detection.box);
 
-        scores.push_back(detection.confidence);
-    }
-    cv::dnn::NMSBoxes(boxes, scores, CONFIDENCE_THRESHOLD, NMS_THRESHOLD, indices);
-    std::cout << "Number of detections after NMS: " << indices.size() << std::endl;
-    if (indices.empty()) {
-        std::cout << "No boxes passed NMS." << std::endl;
-    }
-    for (int idx : indices) {
-        Detection detection = detections[idx];
-        std::cout << "Drawing box at: (" << detection.box.x << ", " << detection.box.y
-                  << "), width: " << detection.box.width << ", height: " << detection.box.height << std::endl;
-        drawDetections(inputImage, {detection});
-    }
-
-    std::vector<Detection> finalDetections;
-    for (int idx : indices) {
-        finalDetections.push_back(detections[idx]);
-    }
-    for (int i = 0; i < 25200; ++i) {
-        float confidence = data[i * 6 + 4];
-        if (confidence >= CONFIDENCE_THRESHOLD) {
-            std::cout << "Detection " << i << ": confidence=" << confidence << std::endl;
+            scores.push_back(detection.confidence);
         }
+        cv::dnn::NMSBoxes(boxes, scores, CONFIDENCE_THRESHOLD, NMS_THRESHOLD, indices);
+        std::cout << "Number of detections after NMS: " << indices.size() << std::endl;
+        if (indices.empty()) {
+            std::cout << "No boxes passed NMS." << std::endl;
+        }
+        for (int idx : indices) {
+            Detection detection = detections[idx];
+            std::cout << "Drawing box at: (" << detection.box.x << ", " << detection.box.y
+                      << "), width: " << detection.box.width << ", height: " << detection.box.height << std::endl;
+            drawDetections(inputImage, {detection});
+        }
+
+        std::vector<Detection> finalDetections;
+        for (int idx : indices) {
+            finalDetections.push_back(detections[idx]);
+        }
+        for (int i = 0; i < 25200; ++i) {
+            float confidence = data[i * 6 + 4];
+            if (confidence >= CONFIDENCE_THRESHOLD) {
+                // std::cout << "Detection " << i << ": confidence=" << confidence << std::endl;
+            }
+        }
+
+        // 绘制检测框并显示图像
+        drawDetections(image, finalDetections);
+        timer1.printElapsedTime("Time to run inference");
     }
-
-    // 绘制检测框并显示图像
-    drawDetections(image, finalDetections);
-    timer1.printElapsedTime("Time to run inference");
-
     cv::imshow("Detections", inputImage);
     cv::waitKey(0);
 

@@ -8,7 +8,7 @@
 #include "Matrox/utils.h"
 #include "Matrox/template_matching.h"
 
-#define IMAGE_PATH MIL_TEXT("C:\\Users\\zjc\\Desktop\\8.bmp")
+#define IMAGE_PATH MIL_TEXT("C:\\Users\\zjc\\Desktop\\cotton_image_new\\357.bmp")
 #define SAVE_PATH MIL_TEXT("C:\\Users\\zjc\\Desktop\\suspect.png")
 
 
