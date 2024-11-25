@@ -22,7 +22,7 @@ int main() {
 
 
     std::map<std::string, int> params;
-    read_params_from_file("C:\\Users\\zjc\\Desktop\\config\\template_config.txt", params);
+    read_params_from_file("C:\\Users\\zjc\\Desktop\\config\\template_color_config.txt", params);
     // Initialize MIL application
     MappAllocDefault(M_DEFAULT, &MilApplication, &MilSystem, &MilDisplay, M_NULL,
         M_NULL);
@@ -34,6 +34,7 @@ int main() {
     // Initialize combined result
     MIL_ID detection_result = M_NULL;
     MIL_ID detection_resize = M_NULL;
+
 
 
     MIL_ID output_Image= M_NULL;

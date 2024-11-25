@@ -9,6 +9,9 @@
 void pre_process(const MIL_ID& inputImage, MIL_ID& outputImageSuspect, const std::map<std::string, int>& params);
 // void LoadTemplate(const MIL_ID &inputImage, MIL_ID &outputImage, std::map<std::string, int> &params);
 
+extern std::vector<std::string> template_paths;
+extern std::vector<MIL_INT> offsetX, offsetY, sizeX, sizeY;
+extern std::vector<MIL_DOUBLE> drawColor;
 
 
 class TemplateMatcher {
@@ -50,7 +53,13 @@ void findModels(const MIL_ID& inputImage,MIL_ID& outputImage);
 
     void FindTemplates(const MIL_ID &inputImage, MIL_ID &outputImage, TemplateMatcher &matcher);
 
-
+void loadConfig(const std::string& filename,
+                std::vector<std::string>& template_paths,
+                std::vector<MIL_INT>& offsetX,
+                std::vector<MIL_INT>& offsetY,
+                std::vector<MIL_INT>& sizeX,
+                std::vector<MIL_INT>& sizeY,
+                std::vector<MIL_DOUBLE>& drawColor);
     // Destructor
     ~TemplateMatcher();
 

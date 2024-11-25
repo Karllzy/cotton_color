@@ -184,27 +184,73 @@ void TemplateMatcher::findModels(const MIL_ID& inputImage,MIL_ID& outputImage)
     MbufFree(input_image_uint8);
 }
 
-void TemplateMatcher::LoadTemplate(TemplateMatcher& matcher, std::map<std::string, int> &params)
-{
-    // Create a TemplateMatcher instance (consider making it static if you want to retain it between calls)
-
-    // Load template models only once
-    matcher.loadTemplates(
-        {
-            "C:\\Users\\zjc\\Desktop\\templates\\template1.png",
-            "C:\\Users\\zjc\\Desktop\\templates\\template2.png",
-            "C:\\Users\\zjc\\Desktop\\templates\\template3.png",
-            "C:\\Users\\zjc\\Desktop\\templates\\template4.png",
-            "C:\\Users\\zjc\\Desktop\\templates\\template5.png",
-            "C:\\Users\\zjc\\Desktop\\templates\\template6.png",
-        },
-        {0, 0, 0, 0,0,0},  // offsetX
-        {0, 0, 0, 0,0,0},  // offsetY
-        {100, 80, 200, 96,96,96}, // sizeX
-        {100, 80, 86, 96,96,96}, // sizeY
-        {M_COLOR_RED, M_COLOR_GREEN, M_COLOR_BLUE, M_COLOR_GREEN,M_COLOR_BLUE,M_COLOR_BLUE} // drawColor
-    );
+std::vector<std::string> splitString(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::stringstream ss(str);
+    std::string item;
+    while (std::getline(ss, item, delimiter)) {
+        tokens.push_back(item);
+    }
+    return tokens;
 }
+
+void TemplateMatcher::loadConfig(const std::string& filename,
+                std::vector<std::string>& template_paths,
+                std::vector<MIL_INT>& offsetX,
+                std::vector<MIL_INT>& offsetY,
+                std::vector<MIL_INT>& sizeX,
+                std::vector<MIL_INT>& sizeY,
+                std::vector<MIL_DOUBLE>& drawColor) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Unable to open configuration file: " << filename << std::endl;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        auto pos = line.find('=');
+        if (pos == std::string::npos) continue;
+
+        std::string key = line.substr(0, pos);
+        std::string value = line.substr(pos + 1);
+        auto values = splitString(value, ',');
+
+        if (key == "template_paths") {
+            template_paths = values;
+        } else if (key == "offsetX") {
+            for (const auto& v : values) offsetX.push_back(std::stoi(v));
+        } else if (key == "offsetY") {
+            for (const auto& v : values) offsetY.push_back(std::stoi(v));
+        } else if (key == "sizeX") {
+            for (const auto& v : values) sizeX.push_back(std::stoi(v));
+        } else if (key == "sizeY") {
+            for (const auto& v : values) sizeY.push_back(std::stoi(v));
+        } else if (key == "drawColor") {
+            for (const auto& v : values) {
+                if (v == "M_COLOR_RED") drawColor.push_back(M_COLOR_RED);
+                else if (v == "M_COLOR_GREEN") drawColor.push_back(M_COLOR_GREEN);
+                else if (v == "M_COLOR_BLUE") drawColor.push_back(M_COLOR_BLUE);
+            }
+        }
+    }
+    file.close();
+}
+
+void TemplateMatcher::LoadTemplate(TemplateMatcher& matcher, std::map<std::string, int>& params)
+{
+    std::vector<std::string> template_paths;
+    std::vector<MIL_INT> offsetX, offsetY, sizeX, sizeY;
+    std::vector<MIL_DOUBLE> drawColor;
+
+    // 调用 loadConfig 并加载配置
+    loadConfig("C:\\Users\\zjc\\Desktop\\config\\template_config.txt",
+               template_paths, offsetX, offsetY, sizeX, sizeY, drawColor);
+
+    // 调用 matcher 的 loadTemplates 方法
+    matcher.loadTemplates(template_paths, offsetX, offsetY, sizeX, sizeY, drawColor);
+}
+
 
 void TemplateMatcher::FindTemplates( const MIL_ID& inputImage, MIL_ID& outputImage,TemplateMatcher& matcher)
 {
@@ -215,7 +261,8 @@ void TemplateMatcher::FindTemplates( const MIL_ID& inputImage, MIL_ID& outputIma
     cout << "Template matching completed.\n";
 }
 
-//TODO: 1加入加载多个模板的功能   已 + 加入配置文件
+//TODO: 1加入加载多个模板的功能   已 + 加入配置文件 已
+
 
 //TODO: 5制作标准结构的函数，例如：matcher.findModels(MIL_ID inputImage, MIL_ID output_image, map);
 ////未实现，因为加载和寻找分开后，要对加载和寻找函数传入类成员，无法统一，其余可用到的参数统一，加一个类成员即可。
