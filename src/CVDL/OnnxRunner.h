@@ -1,16 +1,39 @@
-//
-// Created by zjc on 24-11-26.
-//
-
 #ifndef ONNXRUNNER_H
 #define ONNXRUNNER_H
 
+#include <opencv2/opencv.hpp>
+#include <opencv2/dnn/dnn.hpp>
+#include <iostream>
+#include <vector>
+#include <chrono>
 
+const float CONFIDENCE_THRESHOLD = 0.2;
+const float NMS_THRESHOLD = 0.2;
+const int INPUT_WIDTH = 640;
+const int INPUT_HEIGHT = 640;
 
-class OnnxRunner {
-
+struct Detection {
+    cv::Rect box;
+    float confidence;
 };
 
+// Class to measure elapsed time
+class Timer {
+public:
+    Timer();
+    void restart();
+    void printElapsedTime(const std::string& message);
 
+private:
+    std::chrono::high_resolution_clock::time_point start_time;
+};
 
-#endif //ONNXRUNNER_H
+// Function prototypes
+cv::Mat resizeAndPad(const cv::Mat& image, int targetWidth, int targetHeight, int& padTop, int& padLeft, float& scale, const cv::Scalar& padColor);
+cv::Mat createDetectionMask(const cv::Mat& originalImage, const std::vector<Detection>& detections, float scale, int padTop, int padLeft);
+cv::dnn::Net loadModel(const std::string& modelPath);
+cv::Mat preprocessImage(const cv::Mat& image, cv::dnn::Net& net, int& padTop, int& padLeft, float& scale);
+std::vector<Detection> performInference(cv::dnn::Net& net, const cv::Mat& inputImage);
+std::vector<Detection> applyNMS(std::vector<Detection>& detections);
+
+#endif // ONNXRUNNER_H
