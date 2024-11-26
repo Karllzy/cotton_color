@@ -19,8 +19,6 @@ MIL_ID MilApplication = M_NULL, MilSystem = M_NULL, MilDisplay = M_NULL;
 int main() {
     using namespace std;
 
-
-
     std::map<std::string, int> params;
     read_params_from_file("C:\\Users\\zjc\\Desktop\\config\\template_color_config.txt", params);
     // Initialize MIL application
@@ -61,6 +59,5 @@ int main() {
 
     MbufFree(detection_result);
     MbufFree(MilImage);
-
     return 0;
 }

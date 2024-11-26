@@ -12,6 +12,7 @@
 #include <fstream>
 #include <string>
 #include <map>
+#include"opencv2/opencv.hpp"
 #include <sstream>
 
 // 声明全局变量（注意：这里只是声明，不是定义）
@@ -38,5 +39,6 @@ MIL_ID convert_to_uint8(MIL_ID input_img);
 
 std::wstring convert_to_wstring(const std::string& str);
 void read_params_from_file(const std::string& filename, std::map<std::string, int>& params) ;
-
+cv::Mat milToMat(MIL_ID MilImage);
+void processImage(cv::Mat& img);
 #endif //UTILS_H
