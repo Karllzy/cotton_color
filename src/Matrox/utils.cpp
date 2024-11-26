@@ -11,7 +11,13 @@
 #include <opencv2/core/mat.hpp>
 #include "Mil.h"
 #include <opencv2/opencv.hpp>
+
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <unordered_map>
 using namespace std;
+using namespace cv;
 
 /**
  * Convert Lab values from Photoshop range to OpenCV range.
@@ -121,11 +127,6 @@ void read_params_from_file(const std::string& filename, std::map<std::string, in
     }
 }
 
-#include <fstream>
-#include <string>
-#include <sstream>
-#include <unordered_map>
-
 
 
 // 函数：从配置文件中读取参数
@@ -167,61 +168,52 @@ std::unordered_map<std::string, int> loadConfig(const std::string& filename){
 
 // 图片转换函数，输入4096*1024*3的图片，输出为(4096 / n_valves) * (1024 / n_merge_vertical) * 1
 
-#include "mil.h"  // 包含 MIL 库的头文件
+Mat mil2mat(const MIL_ID mil_img) {
+    // 获取 MIL 图像的宽度、高度和通道数
+    MIL_INT width, height, channels;
+    MbufInquire(mil_img, M_SIZE_X, &width);
+    MbufInquire(mil_img, M_SIZE_Y, &height);
+    MbufInquire(mil_img, M_SIZE_BAND, &channels);
 
-// cv::Mat milToMat(MIL_ID milImage, MIL_ID MilSystem) {
-//     // 获取图像的宽度、高度和像素格式
-//     int width, height, channels;
-//     MbufInquire(milImage, M_SIZE_X, &width);  // 获取图像宽度
-//     MbufInquire(milImage, M_SIZE_Y, &height); // 获取图像高度
-//     MbufInquire(milImage, M_SIZE_BAND, &channels); // 获取图像通道数
-//
-//     // 为图像数据分配内存
-//     byte* buf = new byte[width * height]();  // 初始化内存
-//
-//     // 如果是彩色图像，则转换为灰度图
-//     if (channels > 1) {
-//         MIL_ID grayscaleImage;
-//         // 分配一个新的灰度图像缓冲区
-//         MbufAlloc2d(MilSystem, width, height, 8 + M_UNSIGNED, M_IMAGE + M_PROC + M_DISP, &grayscaleImage);
-//         // 将彩色图像转换为灰度图
-//         MimConvert(milImage, grayscaleImage, M_RGB_TO_L);
-//         // 获取转换后的灰度图像数据
-//         MbufGet(grayscaleImage, buf);
-//         MbufFree(grayscaleImage);  // 释放灰度图像缓冲区
-//     } else {
-//         // 如果本身是灰度图像，直接获取数据
-//         MbufGet(milImage, buf);
-//     }
-//
-//     // 将数据封装成OpenCV Mat对象
-//     cv::Mat cvMat(height, width, CV_8UC1, buf);
-//     return cvMat;
-// }
-cv::Mat milToMat(MIL_ID milImage) {
-    // 获取图像的宽度、高度和像素格式
-    int width, height;
-    MIL_INT pixelFormat;
-    MbufInquire(milImage, M_SIZE_X, &width);  // 获取图像宽度
-    MbufInquire(milImage, M_SIZE_Y, &height); // 获取图像高度
-    MbufInquire(milImage, M_TYPE, &pixelFormat); // 获取图像像素格式
-
-    // 判断像素格式并选择适当的数据类型
-    // MIL_INT 和 M_UINT8 是典型的像素格式，OpenCV 处理不同的类型会有不同的实现
-    cv::Mat matImage;
-    if (pixelFormat == M_RGB)
-    {
-        // 如果是RGB图像
-        matImage = cv::Mat(height, width, CV_8UC3);
+    if (channels == 1) {
+        // 单通道图像，直接读取整个缓冲区
+        Mat grayImage(height, width, CV_8UC1);
+        MbufGet(mil_img, grayImage.data);
+        return grayImage;
     }
-    else
-    {// 如果是其他类型的图像，你需要根据实际格式进行调整
-        std::cerr << "Unsupported MIL image format!" << std::endl;
-        return matImage;
+    if (channels == 3) {
+        // 多通道图像，分通道读取
+        MIL_ID redChannel, greenChannel, blueChannel;
+        MbufAlloc2d(M_DEFAULT, width, height, 8 + M_UNSIGNED, M_IMAGE + M_PROC, &redChannel);
+        MbufAlloc2d(M_DEFAULT, width, height, 8 + M_UNSIGNED, M_IMAGE + M_PROC, &greenChannel);
+        MbufAlloc2d(M_DEFAULT, width, height, 8 + M_UNSIGNED, M_IMAGE + M_PROC, &blueChannel);
+
+        // 将 MIL 图像的各个通道复制到单通道缓冲区
+        MbufCopyColor(mil_img, redChannel, M_RED);
+        MbufCopyColor(mil_img, greenChannel, M_GREEN);
+        MbufCopyColor(mil_img, blueChannel, M_BLUE);
+
+        // 分别读取每个通道的数据
+        Mat redMat(height, width, CV_8UC1);
+        Mat greenMat(height, width, CV_8UC1);
+        Mat blueMat(height, width, CV_8UC1);
+        MbufGet(redChannel, redMat.data);
+        MbufGet(greenChannel, greenMat.data);
+        MbufGet(blueChannel, blueMat.data);
+        // 释放通道缓冲区
+        MbufFree(redChannel);
+        MbufFree(greenChannel);
+        MbufFree(blueChannel);
+
+        // 合并通道
+        std::vector<Mat> bgrChannels = {blueMat, greenMat, redMat};
+        Mat colorImage;
+        cv::merge(bgrChannels, colorImage);
+
+        return colorImage;
     }
-
-    // 获取图像数据并复制到 OpenCV Mat
-    MbufGet(milImage, matImage.data);  // 获取 MIL 图像数据并拷贝到 Mat 对象
-
-    return matImage;
+    // 不支持的通道数
+    std::cerr << "[Error] Unsupported number of channels: " << channels << std::endl;
+    return Mat();
 }
+

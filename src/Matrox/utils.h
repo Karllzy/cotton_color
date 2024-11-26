@@ -39,7 +39,7 @@ MIL_ID convert_to_uint8(MIL_ID input_img);
 
 std::wstring convert_to_wstring(const std::string& str);
 void read_params_from_file(const std::string& filename, std::map<std::string, int>& params) ;
-cv::Mat milToMat(MIL_ID MilImage);
+cv::Mat mil2mat(MIL_ID mil_img);
 void processImage(cv::Mat& img);
 
 std::unordered_map<std::string, int> loadConfig(const std::string& filename);

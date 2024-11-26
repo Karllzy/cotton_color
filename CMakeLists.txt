@@ -4,6 +4,7 @@ project(cotton_color)
 set(CMAKE_CXX_STANDARD 17)
 
 add_definitions(-DUNICODE -D_UNICODE)
+add_compile_options(/utf-8)
 
 # 设置 OpenCV 路径
 if(DEFINED ENV{OpenCV_DIR})
@@ -42,40 +43,8 @@ file(GLOB MIL_LIBS E:/QTexamble/matrox/LIB/*.lib)
 add_subdirectory(src)
 add_subdirectory(tests)
 
-## 添加可执行文件 cotton_color
-#add_executable(cotton_color cotton_color.cpp)
-## 链接 OpenCV 和 Qt 库
-#target_link_libraries(cotton_color Qt6::Widgets ${OpenCV_LIBS} comdlg32)
-#
-## 添加可执行文件 cotton_color
-#add_executable(cotton_range src/Matrox/color_range.cpp
-#        src/Matrox/color_range.h src/Matrox/utils.h src/Matrox/utils.cpp)
-## 链接 OpenCV 和 Qt 库
-#target_link_libraries(cotton_range Qt6::Widgets ${OpenCV_LIBS} ${MIL_LIBS})
-#
-## 添加可执行文件 cotton_color2
-#add_executable(cotton_color2 cotton_color2.cpp)
-## 链接 OpenCV 和 Qt 库
-#target_link_libraries(cotton_color2 Qt6::Widgets ${OpenCV_LIBS} ${MIL_LIBS})
-#
-#add_executable(template_matching src/Matrox/template_matching.cpp
-#        src/Matrox/color_range.cpp src/Matrox/color_range.h
-#        src/Matrox/utils.cpp src/Matrox/utils.h)
-#target_link_libraries(template_matching Qt6::Widgets ${OpenCV_LIBS} ${MIL_LIBS})
-#
-#
-#add_executable(ui src/Matrox/ui.cpp)
-#target_link_libraries(ui Qt6::Widgets)
-#
-#
-#add_executable(onnx src/Matrox/onnx_running.cpp)
-#target_link_libraries(onnx Qt6::Widgets ${MIL_LIBS})
-#
+
 add_executable(opencv_onnx opencv_onnx.cpp)
 # 链接 OpenCV 和 Qt 库
 target_link_libraries(opencv_onnx Qt6::Widgets ${OpenCV_LIBS} comdlg32)
-#
-#
-#add_executable(create_mask src/Matrox/mask.cpp)
-#target_link_libraries(create_mask Qt6::Widgets ${OpenCV_LIBS} ${MIL_LIBS})
-#add_executable(test_color_range tests/test_color_range.cpp)
+

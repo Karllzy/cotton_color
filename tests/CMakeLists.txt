@@ -14,7 +14,6 @@ add_executable(test_template_matching
 target_link_libraries(test_template_matching Matrox ${OpenCV_LIBS} ${MIL_LIBS})
 
 
-
 #测试用例 3：test_mask
 add_executable(test_mask
         ${CMAKE_CURRENT_SOURCE_DIR}/test_mask.cpp)
@@ -27,11 +26,11 @@ add_executable(test_onnx
 # 链接 Matrox 模块和依赖库
 target_link_libraries(test_onnx CVDL ${OpenCV_LIBS} ${MIL_LIBS})
 
-#测试用例 4：test_onnx
+#测试用例 4：test_MIltoMat
 add_executable(test_MILtoMat
         ${CMAKE_CURRENT_SOURCE_DIR}/test_MILtoMat.cpp)
 # 链接 Matrox 模块和依赖库
-target_link_libraries(test_MILtoMat CVDL ${OpenCV_LIBS} ${MIL_LIBS})
+target_link_libraries(test_MILtoMat Matrox CVDL ${OpenCV_LIBS} ${MIL_LIBS})
 
 #测试用例 4：test_onnx
 add_executable(test_total
