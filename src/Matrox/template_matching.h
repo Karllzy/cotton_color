@@ -47,13 +47,13 @@ public:
                        const std::vector<MIL_DOUBLE>& drawColor);
 
     // Search for models in the input image
-void findModels(const MIL_ID& inputImage,MIL_ID& outputImage);
+    void findModels(const MIL_ID& inputImage,MIL_ID& outputImage);
 
-    void LoadTemplate(TemplateMatcher &matcher, std::map<std::string, int> &params);
+    void LoadTemplate(std::map<std::string, int> &params);
 
-    void FindTemplates(const MIL_ID &inputImage, MIL_ID &outputImage, TemplateMatcher &matcher);
+    void FindTemplates(const MIL_ID &inputImage, MIL_ID &outputImage,const std::map<std::string, int> &params);
 
-void loadConfig(const std::string& filename,
+    void loadConfig(const std::string& filename,
                 std::vector<std::string>& template_paths,
                 std::vector<MIL_INT>& offsetX,
                 std::vector<MIL_INT>& offsetY,

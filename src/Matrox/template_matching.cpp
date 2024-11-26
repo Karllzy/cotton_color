@@ -237,7 +237,7 @@ void TemplateMatcher::loadConfig(const std::string& filename,
     file.close();
 }
 
-void TemplateMatcher::LoadTemplate(TemplateMatcher& matcher, std::map<std::string, int>& params)
+void TemplateMatcher::LoadTemplate(std::map<std::string, int>& params)
 {
     std::vector<std::string> template_paths;
     std::vector<MIL_INT> offsetX, offsetY, sizeX, sizeY;
@@ -245,26 +245,39 @@ void TemplateMatcher::LoadTemplate(TemplateMatcher& matcher, std::map<std::strin
 
     // 调用 loadConfig 并加载配置
     loadConfig("C:\\Users\\zjc\\Desktop\\config\\template_config.txt",
-               template_paths, offsetX, offsetY, sizeX, sizeY, drawColor);
+        template_paths, offsetX, offsetY, sizeX, sizeY, drawColor);
 
     // 调用 matcher 的 loadTemplates 方法
-    matcher.loadTemplates(template_paths, offsetX, offsetY, sizeX, sizeY, drawColor);
+    this->loadTemplates(template_paths, offsetX, offsetY, sizeX, sizeY, drawColor);
 }
 
 
-void TemplateMatcher::FindTemplates( const MIL_ID& inputImage, MIL_ID& outputImage,TemplateMatcher& matcher)
+void TemplateMatcher::FindTemplates( const MIL_ID& inputImage, MIL_ID& outputImage,const std::map<std::string, int> &params)
 {
     // Perform template matching
-    matcher.findModels(inputImage,outputImage);
+    this -> findModels(inputImage,outputImage);
 
     // Notify user that matching is complete
     cout << "Template matching completed.\n";
 }
 
-//TODO: 1加入加载多个模板的功能   已 + 加入配置文件 已
 
 
-//TODO: 5制作标准结构的函数，例如：matcher.findModels(MIL_ID inputImage, MIL_ID output_image, map);
-////未实现，因为加载和寻找分开后，要对加载和寻找函数传入类成员，无法统一，其余可用到的参数统一，加一个类成员即可。
-//TODO: 6完善相应部分的手册 已
+
+// TODO: Opencv ONNX runner,
+//       1. 构建相应的模型加载和模型运行函数
+//       2. 在src里头添加另一个cvdl库，专用于视觉深度学习
+//       3. 添加一个类OnnxRunner
+
+// TODO: 完善config文件，确保能够读取mask转换的相关参数
+
+// TODO: Opencv和matrox图像的转换函数，添加到Matrox/utils.cpp
+
+// TODO：构建统一的图像检测器类，可以一键加载，一键开启多进程快速预测
+
+// TODO：计算统一预测框架的预测时间
+
+// TODO: 完善模板和参数，添加陈棉模块，陈棉模块可通过配置进行启用和关闭。
+
+//TODO: 完善相应部分的手册 已
 

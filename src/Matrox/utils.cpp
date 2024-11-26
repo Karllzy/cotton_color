@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <opencv2/core/mat.hpp>
 
 using namespace std;
 
@@ -120,3 +121,4 @@ void read_params_from_file(const std::string& filename, std::map<std::string, in
 }
 
 // 图片转换函数，输入4096*1024*3的图片，输出为(4096 / n_valves) * (1024 / n_merge_vertical) * 1
+// Mat Mil2cvImage(MIL_ID &input_image,Mat) {}

@@ -49,9 +49,9 @@ int main() {
            M_IMAGE + M_PROC, &detection_resize);
         MimResize(detection_result,detection_resize,0.5,0.5,M_DEFAULT);
 
-        matcher.LoadTemplate(matcher,params);
-        matcher.FindTemplates(detection_resize,output_Image,matcher);
-        //最后的释放问题应该出在寻找模板里面
+        matcher.LoadTemplate(params);
+        matcher.FindTemplates(detection_resize,output_Image,params);
+
     });
     MbufSave(SAVE_PATH, detection_result);
     // Display result

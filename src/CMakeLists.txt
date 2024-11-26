@@ -3,6 +3,7 @@ add_library(Matrox
         Matrox/color_range.cpp
         Matrox/utils.cpp
         Matrox/template_matching.cpp
+        Matrox/mask.cpp
 )
 
 # 头文件路径

@@ -112,7 +112,7 @@ int main() {
 
     timer1.printElapsedTime("Time to preprocessing");
     timer1.restart();
-    for(int j = 0; j <30; j++) {
+    for(int j = 0; j <1; j++) {
         // 推理模型
         cv::Mat output = net.forward();
 
@@ -153,9 +153,6 @@ int main() {
 
             }
         }
-
-
-
         // 非极大值抑制
         std::vector<int> indices;
         std::vector<cv::Rect> boxes;
@@ -192,6 +189,41 @@ int main() {
         drawDetections(image, finalDetections);
         timer1.printElapsedTime("Time to run inference");
     }
+    int depth = inputImage.depth();    // 图像数据类型
+    int channels = inputImage.channels();  // 通道数
+
+    // 判断图像深度和通道数，打印类型
+    std::string depthStr;
+    switch (depth) {
+        case CV_8U:
+            depthStr = "8-bit unsigned integer";
+        break;
+        case CV_8S:
+            depthStr = "8-bit signed integer";
+        break;
+        case CV_16U:
+            depthStr = "16-bit unsigned integer";
+        break;
+        case CV_16S:
+            depthStr = "16-bit signed integer";
+        break;
+        case CV_32S:
+            depthStr = "32-bit signed integer";
+        break;
+        case CV_32F:
+            depthStr = "32-bit floating point";
+        break;
+        case CV_64F:
+            depthStr = "64-bit floating point";
+        break;
+        default:
+            depthStr = "Unknown depth";
+        break;
+    }
+
+    std::cout << "Image Depth: " << depthStr << std::endl;
+    std::cout << "Number of Channels: " << channels << std::endl;
+
     cv::imshow("Detections", inputImage);
     cv::waitKey(0);
 
