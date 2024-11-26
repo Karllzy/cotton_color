@@ -121,6 +121,50 @@ void read_params_from_file(const std::string& filename, std::map<std::string, in
     }
 }
 
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <unordered_map>
+
+
+
+// 函数：从配置文件中读取参数
+std::unordered_map<std::string, int> loadConfig(const std::string& filename){
+    unordered_map<string, int> config;
+    ifstream file(filename);
+    string line;
+
+    while (getline(file, line)) {
+        // 跳过空行和注释行
+        if (line.empty() || line[0] == ';' || line[0] == '#')
+            continue;
+
+        // 删除行尾的空格
+        line.erase(line.find_last_not_of(" \t\n\r") + 1);
+
+        // 查找 '=' 分隔符的位置
+        size_t pos = line.find('=');
+        if (pos == string::npos) {
+            continue; // 没有 '='，跳过此行
+        }
+
+        string key = line.substr(0, pos);  // 获取参数名
+        string valueStr = line.substr(pos + 1);  // 获取参数值
+
+        // 删除键和值两端的空格
+        key.erase(key.find_last_not_of(" \t\n\r") + 1);
+        valueStr.erase(valueStr.find_last_not_of(" \t\n\r") + 1);
+
+        // 尝试将参数值转换为整数
+        int value;
+        stringstream(valueStr) >> value;
+
+        config[key] = value;  // 将参数存入 map
+    }
+
+    return config;
+}
+
 // 图片转换函数，输入4096*1024*3的图片，输出为(4096 / n_valves) * (1024 / n_merge_vertical) * 1
 
 #include "mil.h"  // 包含 MIL 库的头文件
@@ -180,48 +224,4 @@ cv::Mat milToMat(MIL_ID milImage) {
     MbufGet(milImage, matImage.data);  // 获取 MIL 图像数据并拷贝到 Mat 对象
 
     return matImage;
-}
-void processImage(cv::Mat& img) {
-    // 1. 将图像从BGR转换到HSV色彩空间
-    cv::Mat hsv;
-    cv::cvtColor(img, hsv, cv::COLOR_BGR2HSV);
-
-    // 2. 定义绿色的HSV色彩范围
-    cv::Scalar lower_green(35, 40, 40); // 低阈值 (H, S, V)
-    cv::Scalar upper_green(85, 255, 255); // 高阈值 (H, S, V)
-
-    // 3. 根据绿色范围创建掩膜
-    cv::Mat green_mask;
-    cv::inRange(hsv, lower_green, upper_green, green_mask);
-
-    // 4. 使用形态学操作去除噪点，增强绿色区域
-    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
-    cv::morphologyEx(green_mask, green_mask, cv::MORPH_CLOSE, kernel);
-
-    // 5. 查找轮廓
-    std::vector<std::vector<cv::Point>> contours;
-    cv::findContours(green_mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
-    // 6. 创建一个黑色背景图像
-    cv::Mat result = cv::Mat::zeros(img.size(), img.type());
-
-    // 7. 遍历轮廓，找到矩形框并将其内部填充为白色
-    for (size_t i = 0; i < contours.size(); i++) {
-        // 通过近似多边形来检测矩形
-        std::vector<cv::Point> approx;
-        cv::approxPolyDP(contours[i], approx, cv::arcLength(contours[i], true) * 0.02, true);
-
-        // 如果是四边形，认为是矩形
-        if (approx.size() == 4) {
-            // 计算矩形的bounding box
-            cv::Rect rect = cv::boundingRect(approx);
-
-            // 仅在绿色区域内将矩形框填充为白色
-            cv::rectangle(result, rect, cv::Scalar(255, 255, 255), cv::FILLED);
-        }
-    }
-
-    // 8. 显示结果图像
-    cv::imshow("Processed Image", result);
-    cv::waitKey(0);
 }
