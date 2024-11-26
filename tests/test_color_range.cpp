@@ -5,7 +5,7 @@
 #include "Matrox/utils.h"
 #include "Matrox/color_range.h"
 
-#define IMAGE_PATH MIL_TEXT("C:\\Users\\zjc\\Desktop\\cotton_image\\174.bmp")
+#define IMAGE_PATH MIL_TEXT("C:\\Users\\zjc\\Desktop\\xixian.png")
 #define SAVE_PATH MIL_TEXT("C:\\Users\\zjc\\Desktop\\diguandai.png")
 
 // Global variables

@@ -269,9 +269,9 @@ void TemplateMatcher::FindTemplates( const MIL_ID& inputImage, MIL_ID& outputIma
 //       2. 在src里头添加另一个cvdl库，专用于视觉深度学习
 //       3. 添加一个类OnnxRunner
 
-// TODO: 完善config文件，确保能够读取mask转换的相关参数
+// TODO: 完善config文件，确保能够读取mask转换的相关参数  已
 
-// TODO: Opencv和matrox图像的转换函数，添加到Matrox/utils.cpp
+// TODO: Opencv和matrox图像的转换函数，添加到Matrox/utils.cpp   有问题
 
 // TODO：构建统一的图像检测器类，可以一键加载，一键开启多进程快速预测
 
