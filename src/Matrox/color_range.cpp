@@ -14,7 +14,6 @@ void lab_process_raw(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std
 
     int denoising = params.at("lab_denoising");
 
-
     // Check number of bands
     MIL_INT NumBands = 0;
     MbufInquire(inputImage, M_SIZE_BAND, &NumBands);

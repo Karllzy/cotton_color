@@ -17,7 +17,7 @@ void pre_process(const MIL_ID& inputImage, MIL_ID& outputImageSuspect, const map
     MimArith(outputImageSuspect, M_NULL, outputImageSuspect, M_NOT);
 }
 
-TemplateMatcher::TemplateMatcher(MIL_ID system, MIL_ID display, std::map<std::string, int>& param)
+TemplateMatcher::TemplateMatcher(MIL_ID& system, MIL_ID& display, std::map<std::string, int>& param)
     : MilSystem(system), MilDisplay(display), isInitialized(false), param(param)
 {
 }
@@ -25,11 +25,9 @@ TemplateMatcher::TemplateMatcher(MIL_ID system, MIL_ID display, std::map<std::st
 // Destructor
 TemplateMatcher::~TemplateMatcher()
 {
-    if (isInitialized) {
         MgraFree(GraphicList);
         MmodFree(MilSearchContext);
         MmodFree(MilResult);
-    }
 }
 
 // Load template models
@@ -76,15 +74,14 @@ void TemplateMatcher::loadTemplates(const std::vector<std::string>& template_pat
                    static_cast<MIL_DOUBLE>(ModelsOffsetY[i]),
                    static_cast<MIL_DOUBLE>(ModelsSizeX[i]),
                    static_cast<MIL_DOUBLE>(ModelsSizeY[i]));
-
-        MgraColor(M_DEFAULT, ModelsDrawColor[i]);
-        MmodDraw(M_DEFAULT, MilSearchContext, GraphicList,
-                 M_DRAW_BOX + M_DRAW_POSITION, i, M_ORIGINAL);
-
         if (this->param["isdisplay"] == 1)
         {
+            MgraColor(M_DEFAULT, ModelsDrawColor[i]);
+            MmodDraw(M_DEFAULT, MilSearchContext, GraphicList,
+                     M_DRAW_BOX + M_DRAW_POSITION, i, M_ORIGINAL);
             MosGetch();
         }
+
         MbufFree(template_temporary);
         MbufFree(template_temporary_uint8);
     }
@@ -168,19 +165,11 @@ void TemplateMatcher::findModels(const MIL_ID& inputImage,MIL_ID& outputImage)
             }
             // Draw results onto the binary image
             MgraColor(M_DEFAULT, 255); // White color for binary image
-            MmodDraw(M_DEFAULT, MilResult, outputImage, M_DRAW_EDGES + M_DRAW_POSITION, i, M_DEFAULT);
-
-            // Draw results on the graphical list for display
-            MgraColor(M_DEFAULT, ModelsDrawColor[Models[i]]);
-            MmodDraw(M_DEFAULT, MilResult, GraphicList,
-                     M_DRAW_EDGES + M_DRAW_POSITION, i, M_DEFAULT);
+            MmodDraw(M_DEFAULT, MilResult, outputImage, M_DRAW_EDGES, i, M_DEFAULT);
         }
-
     } else {
         std::cout << "No models found.\n";
     }
-    // MosPrintf(MIL_TEXT("Press <Enter> to EXIT.\n\n"));
-    // MosGetch();
     MbufFree(input_image_uint8);
 }
 
@@ -251,7 +240,7 @@ void TemplateMatcher::LoadConfig(const string& config_path)
 }
 
 
-void TemplateMatcher::FindTemplates( const MIL_ID& inputImage, MIL_ID& outputImage,const std::map<std::string, int> &params)
+void TemplateMatcher::FindTemplates( const MIL_ID& inputImage, MIL_ID& outputImage, const std::map<std::string, int> &params)
 {
     // Perform template matching
     this -> findModels(inputImage,outputImage);

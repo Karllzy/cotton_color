@@ -43,4 +43,6 @@ cv::Mat mil2mat(MIL_ID mil_img);
 void processImage(cv::Mat& img);
 
 std::unordered_map<std::string, int> loadConfig(const std::string& filename);
+
+void displayCombinedResults(const std::vector<cv::Mat>& images, const std::string& windowName);
 #endif //UTILS_H

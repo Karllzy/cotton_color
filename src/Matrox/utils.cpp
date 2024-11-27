@@ -4,7 +4,7 @@
 
 #include "utils.h"
 
-
+#include <windows.h>
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -170,15 +170,24 @@ std::unordered_map<std::string, int> loadConfig(const std::string& filename){
 
 Mat mil2mat(const MIL_ID mil_img) {
     // 获取 MIL 图像的宽度、高度和通道数
-    MIL_INT width, height, channels;
+    MIL_INT width, height, channels, bitDepth;
+
     MbufInquire(mil_img, M_SIZE_X, &width);
     MbufInquire(mil_img, M_SIZE_Y, &height);
     MbufInquire(mil_img, M_SIZE_BAND, &channels);
+    MbufInquire(mil_img, M_SIZE_BIT, &bitDepth);
 
     if (channels == 1) {
         // 单通道图像，直接读取整个缓冲区
         Mat grayImage(height, width, CV_8UC1);
-        MbufGet(mil_img, grayImage.data);
+        if (bitDepth == 1) {
+            MIL_ID temp_img;
+            temp_img = convert_to_uint8(mil_img);
+            MbufGet(temp_img, grayImage.data);
+            MbufFree(temp_img);
+        } else {
+            MbufGet(mil_img, grayImage.data);
+        }
         return grayImage;
     }
     if (channels == 3) {
@@ -217,3 +226,81 @@ Mat mil2mat(const MIL_ID mil_img) {
     return Mat();
 }
 
+
+#include <opencv2/opencv.hpp>
+#include <vector>
+#include <algorithm>
+
+void displayCombinedResults(const std::vector<cv::Mat>& images, const std::string& windowName) {
+    // Get the screen resolution (you can adjust this if needed, this is for a typical screen)
+    int screen_width = round(GetSystemMetrics(SM_CXSCREEN) * 0.4);
+    int screen_height = round(GetSystemMetrics(SM_CYSCREEN) * 0.4);
+
+    // First, we need to find the maximum width and height among the input images
+    int max_width = 0;
+    int max_height = 0;
+
+    // Loop over all images to get the maximum dimensions
+    for (const auto& img : images) {
+        if (!img.empty()) {
+            max_width = max(max_width, img.cols);
+            max_height = max(max_height, img.rows);
+        }
+    }
+
+    // Resize all images to a reasonable scale to fit the screen
+    float scale_factor = min((float)screen_width / max_width, (float)screen_height / max_height);
+
+    // If the images are already too large, reduce the scale factor
+    if (scale_factor > 1.0) scale_factor = 1.0;
+
+    std::vector<cv::Mat> resized_images;
+    for (const auto& img : images) {
+        if (!img.empty()) {
+            cv::Mat resized_img;
+            // Resize each image based on the scale factor
+            cv::resize(img, resized_img, cv::Size(), scale_factor, scale_factor);
+            resized_images.push_back(resized_img);
+        }
+    }
+
+    // Calculate the grid size for displaying images
+    int num_images = resized_images.size();
+    int num_cols = std::ceil(std::sqrt(num_images)); // Trying to make a square-like grid
+    int num_rows = std::ceil((float)num_images / num_cols);
+
+    std::vector<cv::Mat> rows;
+
+    for (int i = 0; i < num_rows; ++i) {
+        std::vector<cv::Mat> row_images;
+
+        for (int j = 0; j < num_cols; ++j) {
+            int index = i * num_cols + j;
+            if (index < resized_images.size()) {
+                row_images.push_back(resized_images[index]);
+            } else {
+                // If there's no image, create an empty placeholder (black) image
+                row_images.push_back(cv::Mat::zeros(resized_images[0].rows, resized_images[0].cols, resized_images[0].type()));
+            }
+        }
+
+        // Concatenate horizontally to create a single row
+        cv::Mat row;
+        cv::hconcat(row_images, row);
+        rows.push_back(row);
+    }
+
+    // Concatenate all rows vertically to create the final grid
+    cv::Mat final_result;
+    cv::vconcat(rows, final_result);
+
+    // Set the window properties to allow resizing
+    cv::namedWindow(windowName, cv::WINDOW_NORMAL);
+    cv::resizeWindow(windowName, screen_width, screen_height); // Resize window to screen size
+
+    // Display the combined result
+    cv::imshow(windowName, final_result);
+
+    // Wait for the user to press a key or the window to close
+    cv::waitKey(0);
+}

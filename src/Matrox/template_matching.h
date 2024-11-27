@@ -35,7 +35,7 @@ private:
 
 public:
     // Constructor
-    TemplateMatcher(MIL_ID system, MIL_ID display, std::map<std::string, int>& param);
+    TemplateMatcher(MIL_ID& system, MIL_ID& display, std::map<std::string, int>& param);
 
     void LoadConfig(const std::string& config_path);
 
