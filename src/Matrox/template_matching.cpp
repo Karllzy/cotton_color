@@ -119,8 +119,9 @@ void TemplateMatcher::findModels(const MIL_ID& inputImage,MIL_ID& outputImage)
         return;
     }
     MIL_ID input_image_uint8 = convert_to_uint8(inputImage);
-
-    MdispSelect(MilDisplay, input_image_uint8);
+    if(this->param["isdisplay"] == 1) {
+        MdispSelect(MilDisplay, input_image_uint8);
+    }
 
     // Clear previous annotations
     MgraClear(M_DEFAULT, GraphicList);
@@ -155,13 +156,16 @@ void TemplateMatcher::findModels(const MIL_ID& inputImage,MIL_ID& outputImage)
         MbufClear(outputImage, 0);
 
         // Display results
-        std::cout << "Found " << NumResults << " model(s) in " << Time * 1000.0 << " ms:\n";
-        std::cout << "Result   Model   X Position   Y Position   Angle   Scale   Score\n";
+        if(this->param["debug_mode"] == 1) {
+            std::cout << "Found " << NumResults << " model(s) in " << Time * 1000.0 << " ms:\n";
+            std::cout << "Result   Model   X Position   Y Position   Angle   Scale   Score\n";
+        }
         for (MIL_INT i = 0; i < NumResults; ++i) {
-            std::cout << i << "        " << Models[i] << "        " << XPosition[i] << "        "
-                      << YPosition[i] << "        " << Angle[i] << "        " << Scale[i]
-                      << "        " << Score[i] << "%\n";
-
+            if (this->param["debug_mode"] == 1) {
+                std::cout << i << "        " << Models[i] << "        " << XPosition[i] << "        "
+                          << YPosition[i] << "        " << Angle[i] << "        " << Scale[i]
+                          << "        " << Score[i] << "%\n";
+            }
             // Draw results onto the binary image
             MgraColor(M_DEFAULT, 255); // White color for binary image
             MmodDraw(M_DEFAULT, MilResult, outputImage, M_DRAW_EDGES + M_DRAW_POSITION, i, M_DEFAULT);
@@ -172,15 +176,11 @@ void TemplateMatcher::findModels(const MIL_ID& inputImage,MIL_ID& outputImage)
                      M_DRAW_EDGES + M_DRAW_POSITION, i, M_DEFAULT);
         }
 
-        // Display or save the binary image
-
-        MbufSave(SAVE_PATH2, outputImage);
-
     } else {
         std::cout << "No models found.\n";
     }
-    MosPrintf(MIL_TEXT("Press <Enter> to EXIT.\n\n"));
-    MosGetch();
+    // MosPrintf(MIL_TEXT("Press <Enter> to EXIT.\n\n"));
+    // MosGetch();
     MbufFree(input_image_uint8);
 }
 
@@ -237,15 +237,14 @@ void TemplateMatcher::loadConfig(const std::string& filename,
     file.close();
 }
 
-void TemplateMatcher::LoadTemplate(std::map<std::string, int>& params)
+void TemplateMatcher::LoadConfig(const string& config_path)
 {
     std::vector<std::string> template_paths;
     std::vector<MIL_INT> offsetX, offsetY, sizeX, sizeY;
     std::vector<MIL_DOUBLE> drawColor;
 
     // 调用 loadConfig 并加载配置
-    loadConfig("C:\\Users\\zjc\\Desktop\\config\\template_config.txt",
-        template_paths, offsetX, offsetY, sizeX, sizeY, drawColor);
+    loadConfig(config_path, template_paths, offsetX, offsetY, sizeX, sizeY, drawColor);
 
     // 调用 matcher 的 loadTemplates 方法
     this->loadTemplates(template_paths, offsetX, offsetY, sizeX, sizeY, drawColor);
@@ -256,12 +255,24 @@ void TemplateMatcher::FindTemplates( const MIL_ID& inputImage, MIL_ID& outputIma
 {
     // Perform template matching
     this -> findModels(inputImage,outputImage);
-
-    // Notify user that matching is complete
-    cout << "Template matching completed.\n";
 }
 
-
+void TemplateMatcher::predict(const MIL_ID &inputImage, MIL_ID &outputImage, const std::map<std::string, int> &params) {
+    MIL_ID detection_result, detection_resize, output_image_unresize;
+    pre_process(inputImage, detection_result, params);
+    MbufAlloc2d(MilSystem, MbufInquire(detection_result, M_SIZE_X, M_NULL)/2,
+       MbufInquire(detection_result, M_SIZE_Y, M_NULL)/2, 1 + M_UNSIGNED,
+       M_IMAGE + M_PROC, &detection_resize);
+    MimResize(detection_result,detection_resize,0.5,0.5,M_DEFAULT);
+    this->FindTemplates(detection_resize,output_image_unresize, params);
+    MbufAlloc2d(MilSystem, MbufInquire(detection_result, M_SIZE_X, M_NULL),
+       MbufInquire(detection_result, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
+       M_IMAGE + M_PROC, &outputImage);
+    MimResize(output_image_unresize,outputImage,2,2,M_DEFAULT);
+    MbufFree(detection_result);
+    MbufFree(detection_resize);
+    MbufFree(output_image_unresize);
+}
 
 
 // TODO: Opencv ONNX runner,    已

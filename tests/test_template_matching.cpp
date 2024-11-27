@@ -37,7 +37,7 @@ int main() {
 
     MIL_ID output_Image= M_NULL;
     TemplateMatcher matcher(MilSystem, MilDisplay, params);
-
+    matcher.LoadConfig("C:\\Users\\zjc\\Desktop\\config\\template_config.txt");
     // Measure execution time
     measure_execution_time([&]()
         {
@@ -46,8 +46,6 @@ int main() {
            MbufInquire(detection_result, M_SIZE_Y, M_NULL)/2, 1 + M_UNSIGNED,
            M_IMAGE + M_PROC, &detection_resize);
         MimResize(detection_result,detection_resize,0.5,0.5,M_DEFAULT);
-
-        matcher.LoadTemplate(params);
         matcher.FindTemplates(detection_resize,output_Image,params);
 
     });

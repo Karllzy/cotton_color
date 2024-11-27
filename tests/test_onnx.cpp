@@ -7,7 +7,8 @@ int main() {
     Timer timer1;
 
     // Load the model
-    cv::dnn::Net net = loadModel(modelPath);
+    ONNXRunner runner;
+    runner.load(modelPath);
     timer1.printElapsedTime("Time to load the model");
 
     // Read the input image
@@ -16,30 +17,19 @@ int main() {
         std::cerr << "Could not read the image: " << imagePath << std::endl;
         return -1;
     }
-
-    // Preprocess image
-    int padTop, padLeft;
-    float scale;
-    cv::Mat inputImage = preprocessImage(image, net, padTop, padLeft, scale);
-    timer1.printElapsedTime("Time to preprocess image");
-
-    // Perform inference
-    std::vector<Detection> detections = performInference(net, inputImage);
-
-    // Apply Non-Maximum Suppression
-    std::vector<Detection> finalDetections = applyNMS(detections);
-    std::cout << "Number of detections after NMS: " << finalDetections.size() << std::endl;
-
-    // Create and show the detection mask
-    cv::Mat detectionMask = createDetectionMask(image, finalDetections, scale, padTop, padLeft);
-
-    // cv::imshow("Detection Mask", detectionMask);
-
+    cv::Mat mask;
+    timer1.printElapsedTime("Time to load image.");
+    for(int i = 0; i < 10; i++) {
+        std:: cout << "Run time: " << i << std::endl;
+        std::vector<Detection> result = runner.predict(image);
+        timer1.printElapsedTime("Time to predict result");
+        mask = runner.postProcess(result, image);
+        timer1.printElapsedTime("Time to predict result");
+    }
     // Save the result
-
     std::string savepath = "C:\\Users\\zjc\\Desktop\\suspect_mask.png";
-    cv::imwrite(savepath, detectionMask);
-    timer1.printElapsedTime("Time to run inference");
+    cv::imwrite(savepath, mask);
+    timer1.printElapsedTime("Time to save image");
 
     cv::waitKey(0);
     return 0;

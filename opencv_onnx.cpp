@@ -124,7 +124,7 @@ int main() {
 
     timer1.printElapsedTime("Time to preprocess image");
 
-    for (int j = 0; j < 1; j++) {
+    for (int j = 0; j < 10; j++) {
         // Run inference
         cv::Mat output = net.forward();
 
@@ -187,8 +187,8 @@ int main() {
         cv::imshow("Detection Mask", detectionMask);
         
         // Save the result as an image
-        std::string savepath = "C:\\Users\\zjc\\Desktop\\suspect_mask.png";
-        cv::imwrite(savepath, detectionMask);
+        // std::string savepath = "C:\\Users\\zjc\\Desktop\\suspect_mask.png";
+        // cv::imwrite(savepath, detectionMask);
 
         timer1.printElapsedTime("Time to run inference");
     }

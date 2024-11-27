@@ -21,7 +21,6 @@ private:
     MIL_ID MilSearchContext;
     MIL_ID MilResult;
     MIL_ID GraphicList;
-#define SAVE_PATH2 MIL_TEXT("C:\\Users\\zjc\\Desktop\\detection.png")
 
     std::vector<std::string> ModelImgPaths;
     std::vector<MIL_INT> ModelsOffsetX;
@@ -38,7 +37,7 @@ public:
     // Constructor
     TemplateMatcher(MIL_ID system, MIL_ID display, std::map<std::string, int>& param);
 
-
+    void LoadConfig(const std::string& config_path);
 
     // Load template models
     void loadTemplates(const std::vector<std::string>& template_paths,
@@ -49,11 +48,13 @@ public:
     // Search for models in the input image
     void findModels(const MIL_ID& inputImage,MIL_ID& outputImage);
 
-    void LoadTemplate(std::map<std::string, int> &params);
+
 
     void FindTemplates(const MIL_ID &inputImage, MIL_ID &outputImage,const std::map<std::string, int> &params);
 
-    void loadConfig(const std::string& filename,
+    void predict(const MIL_ID& inputImage, MIL_ID& outputImage, const std::map<std::string, int> &params);
+
+    static void loadConfig(const std::string& filename,
                 std::vector<std::string>& template_paths,
                 std::vector<MIL_INT>& offsetX,
                 std::vector<MIL_INT>& offsetY,

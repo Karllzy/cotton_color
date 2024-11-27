@@ -2,6 +2,8 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <CVDL/OnnxRunner.h>
+
 #include "Mil.h"
 #include "Matrox/utils.h"
 #include "Matrox/color_range.h"
@@ -10,101 +12,74 @@
 // 宏定义
 #define SAVE_PATH3 MIL_TEXT("C:\\Users\\zjc\\Desktop\\suspect.png")
 #define SAVE_PATH4 MIL_TEXT("C:\\Users\\zjc\\Desktop\\suspect2.png")
-#define IMAGE_PATH MIL_TEXT("C:\\Users\\zjc\\Desktop\\cotton_image_new\\357.bmp")
+#define IMAGE_PATH MIL_TEXT(".\\test_imgs\\357.bmp")
+std::string imagePath = "C:\\Users\\zjc\\Desktop\\dimo.bmp";
 
 MIL_ID MilApplication, MilSystem, MilDisplay;
 std::map<std::string, int> params;
 
-void run_high_sat_detect(MIL_ID MilImage, std::map<std::string, int>& params) {
-    MIL_ID detection_result = M_NULL;
-    read_params_from_file("C:\\Users\\zjc\\Desktop\\config\\color_range_config.txt", params);
-
-    measure_execution_time([&]() {
-        high_sat_detect(MilImage, detection_result, params);
-    });
-
-    MbufSave(SAVE_PATH3, detection_result);
-    MbufFree(detection_result);
-}
-
-void run_pre_process(MIL_ID MilImage, std::map<std::string, int>& params) {
-    MIL_ID detection_result = M_NULL;
-    MIL_ID detection_resize = M_NULL;
-    MIL_ID output_Image = M_NULL;
-
-    read_params_from_file("C:\\Users\\zjc\\Desktop\\config\\template_color_config.txt", params);
-    TemplateMatcher matcher(MilSystem, MilDisplay, params);
-
-    measure_execution_time([&]() {
-        pre_process(MilImage, detection_result, params);
-        MbufAlloc2d(MilSystem, MbufInquire(detection_result, M_SIZE_X, M_NULL) / 2,
-                    MbufInquire(detection_result, M_SIZE_Y, M_NULL) / 2, 1 + M_UNSIGNED,
-                    M_IMAGE + M_PROC, &detection_resize);
-        MimResize(detection_result, detection_resize, 0.5, 0.5, M_DEFAULT);
-
-        matcher.LoadTemplate(params);
-        matcher.FindTemplates(detection_resize, output_Image, params);
-    });
-
-    MbufSave(SAVE_PATH4, detection_result);
-    MbufFree(detection_resize);
-    MbufFree(output_Image);
-    MbufFree(detection_result);
-}
-
+using namespace std;
 int main() {
     // 初始化 MIL 应用
-
     MappAllocDefault(M_DEFAULT, &MilApplication, &MilSystem, &MilDisplay, M_NULL, M_NULL) ;
     // 读取图片
-    MIL_ID MilImage = M_NULL;
+    MIL_ID MilImage=M_NULL, MilHighSatResult = M_NULL, MilTemplateMatchingResult = M_NULL;
     MbufRestore(IMAGE_PATH, MilSystem, &MilImage);
     if (MilImage == M_NULL) {
         std::cerr << "Error: Failed to restore image from " << IMAGE_PATH << std::endl;
         MappFreeDefault(MilApplication, MilSystem, MilDisplay, M_NULL, M_NULL);
         return -1;
     }
+    Timer timer1, timer2;
+    std::map<std::string, int> params;
+    read_params_from_file("..\\config\\color_range_config.txt", params);
+    read_params_from_file("..\\config\\template_color_config.txt", params);
+    TemplateMatcher matcher(MilSystem, MilDisplay, params);
+    matcher.LoadConfig("..\\config\\template_config.txt");
+    ONNXRunner runner;
+    runner.load("C:\\Users\\zjc\\Desktop\\dimo_11.14.onnx");
+    timer1.printElapsedTime("Load config and templates and models");
+    cv::Mat deep_result, high_sat_result, template_result, total_result;
+    cout << "Sequence running start:" << endl;
+    for(int i = 0; i < 10; i++) {
+        cout << i << endl;
+        timer1.restart();
+        timer2.restart();
+        // 艳丽色彩检测
+        high_sat_detect(MilImage, MilHighSatResult, params);
+        timer1.printElapsedTime("High Sat Predict finished");
+        // 模板匹配检测
+        matcher.predict(MilImage, MilTemplateMatchingResult, params);
+        timer1.printElapsedTime("Template Matching Predict finished");
+        // 深度学习检测
+        cv::Mat cv_input = mil2mat(MilImage);
+        std::vector<Detection> result = runner.predict(cv_input);
+        deep_result = runner.postProcess(result, cv_input);
+        std::string savepath = "C:\\Users\\zjc\\Desktop\\suspect_mask2.png";
+        cv::imwrite(savepath, deep_result);
+        timer1.printElapsedTime("Deep Learning Predict finished");
+        high_sat_result = mil2mat(MilHighSatResult);
+        template_result = mil2mat(MilTemplateMatchingResult);
 
-    // 加载参数
-    // 创建两个子进程
-    PROCESS_INFORMATION processInfo1, processInfo2;
-    STARTUPINFO startupInfo1, startupInfo2;
+        if (!deep_result.empty() && !high_sat_result.empty() && !template_result.empty()) {
+            cv::bitwise_and(deep_result, high_sat_result, total_result);
+            cv::bitwise_and(total_result, template_result, total_result);
+        } else {
+            cerr << "Error: One or more detection results are empty!" << endl;
+        }
+        timer2.printElapsedTime("Prediction finished Total");
 
-    ZeroMemory(&startupInfo1, sizeof(startupInfo1));
-    ZeroMemory(&startupInfo2, sizeof(startupInfo2));
-    ZeroMemory(&processInfo1, sizeof(processInfo1));
-    ZeroMemory(&processInfo2, sizeof(processInfo2));
+        cv::imshow("Result", total_result);
+        cv::waitKey(0);
 
-    startupInfo1.cb = sizeof(startupInfo1);
-    startupInfo2.cb = sizeof(startupInfo2);
-
-    // 子进程1
-    if (!CreateProcess(NULL, LPWSTR((LPSTR) "ChildProcess1.exe"), NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo1, &processInfo1)) {
-        std::cerr << "Error: Failed to create process 1. Error code: " << GetLastError() << std::endl;
-        MbufFree(MilImage);
-        MappFreeDefault(MilApplication, MilSystem, MilDisplay, M_NULL, M_NULL);
-        return -1;
     }
 
-    // 子进程2
-    if (!CreateProcess(NULL, LPWSTR((LPSTR) "ChildProcess2.exe"), NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo2, &processInfo2)) {
-        std::cerr << "Error: Failed to create process 2. Error code: " << GetLastError() << std::endl;
-        MbufFree(MilImage);
-        MappFreeDefault(MilApplication, MilSystem, MilDisplay, M_NULL, M_NULL);
-        return -1;
-    }
 
-    // 等待两个子进程完成
-    WaitForSingleObject(processInfo1.hProcess, INFINITE);
-    WaitForSingleObject(processInfo2.hProcess, INFINITE);
-
-    CloseHandle(processInfo1.hProcess);
-    CloseHandle(processInfo1.hThread);
-    CloseHandle(processInfo2.hProcess);
-    CloseHandle(processInfo2.hThread);
 
     // 释放资源
     MbufFree(MilImage);
+    MbufFree(MilHighSatResult);
+    MbufFree(MilTemplateMatchingResult);
     MappFreeDefault(MilApplication, MilSystem, MilDisplay, M_NULL, M_NULL);
 
     std::cout << "所有模块检测已完成！按 <Enter> 退出。" << std::endl;
