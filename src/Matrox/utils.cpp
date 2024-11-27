@@ -227,16 +227,19 @@ Mat mil2mat(const MIL_ID mil_img) {
 }
 
 
+
 #include <opencv2/opencv.hpp>
+#include <cmath>
 #include <vector>
-#include <algorithm>
+#include <string>
+#include <windows.h>
 
 void displayCombinedResults(const std::vector<cv::Mat>& images, const std::string& windowName) {
-    // Get the screen resolution (you can adjust this if needed, this is for a typical screen)
-    int screen_width = round(GetSystemMetrics(SM_CXSCREEN) * 0.4);
-    int screen_height = round(GetSystemMetrics(SM_CYSCREEN) * 0.4);
+    // Get the screen resolution
+    int screen_width = GetSystemMetrics(SM_CXSCREEN); // Screen width
+    int screen_height = GetSystemMetrics(SM_CYSCREEN); // Screen height
 
-    // First, we need to find the maximum width and height among the input images
+    // Find the maximum width and height among the input images
     int max_width = 0;
     int max_height = 0;
 
@@ -248,12 +251,16 @@ void displayCombinedResults(const std::vector<cv::Mat>& images, const std::strin
         }
     }
 
-    // Resize all images to a reasonable scale to fit the screen
-    float scale_factor = min((float)screen_width / max_width, (float)screen_height / max_height);
+    // Calculate the scaling factor based on the maximum image width and screen width
+    float scale_factor = 1.0f;  // Default scale factor is 1 (no scaling)
 
-    // If the images are already too large, reduce the scale factor
-    if (scale_factor > 1.0) scale_factor = 1.0;
+    // If images are larger than the screen width, scale them down
+    if (max_width > screen_width) {
+        scale_factor = (float)screen_width / max_width;
+    }
 
+
+    // Resize all images based on the calculated scale factor
     std::vector<cv::Mat> resized_images;
     for (const auto& img : images) {
         if (!img.empty()) {
@@ -296,7 +303,7 @@ void displayCombinedResults(const std::vector<cv::Mat>& images, const std::strin
 
     // Set the window properties to allow resizing
     cv::namedWindow(windowName, cv::WINDOW_NORMAL);
-    cv::resizeWindow(windowName, screen_width, screen_height); // Resize window to screen size
+    cv::resizeWindow(windowName, final_result.cols, final_result.rows); // Resize window based on the final image size
 
     // Display the combined result
     cv::imshow(windowName, final_result);
