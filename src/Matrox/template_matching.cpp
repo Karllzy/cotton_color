@@ -147,7 +147,7 @@ void TemplateMatcher::findModels(const MIL_ID& inputImage,MIL_ID& outputImage)
 
         // Create a binary image buffer
         MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-              MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
+              MbufInquire(inputImage, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
               M_IMAGE + M_PROC, &outputImage);
         // Initialize the binary image to black
         MbufClear(outputImage, 0);
@@ -252,12 +252,12 @@ void TemplateMatcher::predict(const MIL_ID &inputImage, MIL_ID &outputImage, con
     if (do_resize) {
         MIL_ID  detection_resize, output_image_unresize;
         MbufAlloc2d(MilSystem, MbufInquire(detection_result, M_SIZE_X, M_NULL)/2,
-       MbufInquire(detection_result, M_SIZE_Y, M_NULL)/2, 1 + M_UNSIGNED,
+       MbufInquire(detection_result, M_SIZE_Y, M_NULL)/2, 8 + M_UNSIGNED,
        M_IMAGE + M_PROC, &detection_resize);
         MimResize(detection_result,detection_resize,0.5,0.5,M_DEFAULT);
         this->FindTemplates(detection_resize,output_image_unresize, params);
         MbufAlloc2d(MilSystem, MbufInquire(detection_result, M_SIZE_X, M_NULL),
-           MbufInquire(detection_result, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
+           MbufInquire(detection_result, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
            M_IMAGE + M_PROC, &outputImage);
         MimResize(output_image_unresize,outputImage,2,2,M_DEFAULT);
         MbufFree(detection_result);

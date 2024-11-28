@@ -54,7 +54,7 @@ void LoadImagesFromFolder(const std::string& folderPath)
                         {
                         pre_process(MilImage, detection_result, params);
                         MbufAlloc2d(MilSystem, MbufInquire(detection_result, M_SIZE_X, M_NULL)/2,
-                           MbufInquire(detection_result, M_SIZE_Y, M_NULL)/2, 1 + M_UNSIGNED,
+                           MbufInquire(detection_result, M_SIZE_Y, M_NULL)/2, 8 + M_UNSIGNED,
                            M_IMAGE + M_PROC, &detection_resize);
                         MimResize(detection_result,detection_resize,0.5,0.5,M_DEFAULT);
                         matcher.FindTemplates(detection_resize,output_Image,params);

@@ -18,7 +18,7 @@
 #define IMAGE_DIR MIL_TEXT(".\\test_imgs\\cotton_image_new") // 文件夹路径
 
 #define run_high_sat true;
-#define run_templating false;
+#define run_templating true;
 #define run_deep_learning true;
 
 MIL_ID MilApplication, MilSystem, MilDisplay;
