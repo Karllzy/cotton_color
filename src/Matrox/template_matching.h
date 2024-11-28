@@ -15,12 +15,9 @@ extern std::vector<MIL_DOUBLE> drawColor;
 
 
 class TemplateMatcher {
-private:
-    MIL_ID MilSystem;
-    MIL_ID MilDisplay;
-    MIL_ID MilSearchContext;
-    MIL_ID MilResult;
-    MIL_ID GraphicList;
+    MIL_ID MilSearchContext{};
+    MIL_ID MilResult{};
+    MIL_ID GraphicList{};
 
     std::vector<std::string> ModelImgPaths;
     std::vector<MIL_INT> ModelsOffsetX;
@@ -35,7 +32,7 @@ private:
 
 public:
     // Constructor
-    TemplateMatcher(MIL_ID& system, MIL_ID& display, std::map<std::string, int>& param);
+    explicit TemplateMatcher(std::map<std::string, int>& param);
 
     void LoadConfig(const std::string& config_path);
 
@@ -49,10 +46,9 @@ public:
     void findModels(const MIL_ID& inputImage,MIL_ID& outputImage);
 
 
-
     void FindTemplates(const MIL_ID &inputImage, MIL_ID &outputImage,const std::map<std::string, int> &params);
 
-    void predict(const MIL_ID& inputImage, MIL_ID& outputImage, const std::map<std::string, int> &params);
+    void predict(const MIL_ID &inputImage, MIL_ID &outputImage, const std::map<std::string, int> &params, bool do_resize);
 
     static void loadConfig(const std::string& filename,
                 std::vector<std::string>& template_paths,

@@ -17,7 +17,7 @@ MIL_ID MilApplication = M_NULL, MilSystem = M_NULL, MilDisplay = M_NULL;
 namespace fs = std::filesystem;
 
 
-void LoadImagesFromFolder(const std::string& folderPath, MIL_ID MilSystem)
+void LoadImagesFromFolder(const std::string& folderPath)
 {
     // 遍历文件夹中的所有文件
     for (const auto& entry : fs::directory_iterator(folderPath))
@@ -46,10 +46,10 @@ void LoadImagesFromFolder(const std::string& folderPath, MIL_ID MilSystem)
                 MIL_ID detection_resize = M_NULL;
                 cv::Mat template_result;
                 MIL_ID output_Image= M_NULL;
-                TemplateMatcher matcher(MilSystem, MilDisplay, params);
+                TemplateMatcher matcher(params);
                 matcher.LoadConfig("C:\\Users\\zjc\\Desktop\\config\\template_config.txt");
                 // Measure execution time
-                for (int i = 0; i <1; i++) {
+                for (int i = 0; i <12; i++) {
                     measure_execution_time([&]()
                         {
                         pre_process(MilImage, detection_result, params);
@@ -88,7 +88,7 @@ int main() {
 
     std::string folderPath ="C:/Users/zjc/Desktop/cotton_image_new"; // 请替换为你自己的文件夹路径
     // 加载文件夹中的所有图片
-    LoadImagesFromFolder(folderPath, MilSystem);
+    LoadImagesFromFolder(folderPath);
 
     // Display result
     MappFreeDefault(MilApplication, MilSystem, MilDisplay, M_NULL, M_NULL);

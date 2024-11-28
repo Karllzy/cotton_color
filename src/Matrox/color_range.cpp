@@ -40,16 +40,16 @@ void lab_process_raw(const MIL_ID& inputImage, MIL_ID& outputImageLab, const std
     MbufChildColor(MilLabImage, 2, &MilBChannel);
 
     // Allocate output image as 1-bit image
-    MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &outputImageLab);
+    MbufAlloc2d(MilSystem, SizeX, SizeY, 8 + M_UNSIGNED, M_IMAGE + M_PROC, &outputImageLab);
     MbufClear(outputImageLab, 0);  // Initialize to 0
 
     // Pre-allocate binary buffers as 1-bit images
     MIL_ID MilBinaryL = M_NULL, MilBinaryA = M_NULL, MilBinaryB = M_NULL, MilResultLab = M_NULL;
-    MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &MilBinaryL);
-    MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &MilBinaryA);
-    MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &MilBinaryB);
-    MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &MilResultLab);
-    MbufAlloc2d(MilSystem, SizeX, SizeY, 1 + M_UNSIGNED, M_IMAGE + M_PROC, &lab_result);
+    MbufAlloc2d(MilSystem, SizeX, SizeY, 8 + M_UNSIGNED, M_IMAGE + M_PROC, &MilBinaryL);
+    MbufAlloc2d(MilSystem, SizeX, SizeY, 8 + M_UNSIGNED, M_IMAGE + M_PROC, &MilBinaryA);
+    MbufAlloc2d(MilSystem, SizeX, SizeY, 8 + M_UNSIGNED, M_IMAGE + M_PROC, &MilBinaryB);
+    MbufAlloc2d(MilSystem, SizeX, SizeY, 8 + M_UNSIGNED, M_IMAGE + M_PROC, &MilResultLab);
+    MbufAlloc2d(MilSystem, SizeX, SizeY, 8 + M_UNSIGNED, M_IMAGE + M_PROC, &lab_result);
 
 
     // Iterate over colors
@@ -155,13 +155,13 @@ void hsv_process(const MIL_ID& inputImage, MIL_ID& outputImageHSV, const std::ma
 
     // 分配输出图像缓冲区
     MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-        MbufInquire(inputImage, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
+        MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
         M_IMAGE + M_PROC + M_DISP, &hsv_result);
     MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-    MbufInquire(inputImage, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
+    MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
     M_IMAGE + M_PROC + M_DISP, &hsv_denoising);
     MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-    MbufInquire(inputImage, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
+    MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
     M_IMAGE + M_PROC + M_DISP, &outputImageHSV);
 
     // 对 S 通道进行阈值分割
@@ -188,7 +188,7 @@ void high_sat_detect(const MIL_ID& inputImage, MIL_ID& outputImage, const std::m
     lab_process(inputImage, output_lab, params);
 
     MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-        MbufInquire(inputImage, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
+        MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
         M_IMAGE + M_PROC, &outputImage);
 
     // 合并 Lab 和 HSV 的结果（取“或”运算）

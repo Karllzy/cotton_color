@@ -17,8 +17,8 @@ void pre_process(const MIL_ID& inputImage, MIL_ID& outputImageSuspect, const map
     MimArith(outputImageSuspect, M_NULL, outputImageSuspect, M_NOT);
 }
 
-TemplateMatcher::TemplateMatcher(MIL_ID& system, MIL_ID& display, std::map<std::string, int>& param)
-    : MilSystem(system), MilDisplay(display), isInitialized(false), param(param)
+TemplateMatcher::TemplateMatcher(std::map<std::string, int>& param)
+    :isInitialized(false), param(param)
 {
 }
 
@@ -63,7 +63,8 @@ void TemplateMatcher::loadTemplates(const std::vector<std::string>& template_pat
         MIL_ID template_temporary;
         MgraClear(M_DEFAULT, GraphicList);
         MbufRestore(convert_to_wstring(ModelImgPaths[i]).c_str(), MilSystem, &template_temporary);
-        MIL_ID template_temporary_uint8 = convert_to_uint8(template_temporary);
+        MIL_ID template_temporary_uint8;
+        convert_to_uint8(template_temporary, template_temporary_uint8);
         if (this->param["isdisplay"] == 1)
         {
             MdispSelect(MilDisplay, template_temporary_uint8);
@@ -115,9 +116,8 @@ void TemplateMatcher::findModels(const MIL_ID& inputImage,MIL_ID& outputImage)
         std::cerr << "Templates are not loaded. Please load templates before searching.\n";
         return;
     }
-    MIL_ID input_image_uint8 = convert_to_uint8(inputImage);
     if(this->param["isdisplay"] == 1) {
-        MdispSelect(MilDisplay, input_image_uint8);
+        MdispSelect(MilDisplay, inputImage);
     }
 
     // Clear previous annotations
@@ -126,7 +126,7 @@ void TemplateMatcher::findModels(const MIL_ID& inputImage,MIL_ID& outputImage)
     // Find models
     MIL_DOUBLE Time = 0.0;
     MappTimer(M_DEFAULT, M_TIMER_RESET + M_SYNCHRONOUS, M_NULL);
-    MmodFind(MilSearchContext, input_image_uint8, MilResult);
+    MmodFind(MilSearchContext, inputImage, MilResult);
     MappTimer(M_DEFAULT, M_TIMER_READ + M_SYNCHRONOUS, &Time);
 
     // Get results
@@ -147,7 +147,7 @@ void TemplateMatcher::findModels(const MIL_ID& inputImage,MIL_ID& outputImage)
 
         // Create a binary image buffer
         MbufAlloc2d(MilSystem, MbufInquire(inputImage, M_SIZE_X, M_NULL),
-              MbufInquire(inputImage, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
+              MbufInquire(inputImage, M_SIZE_Y, M_NULL), 8 + M_UNSIGNED,
               M_IMAGE + M_PROC, &outputImage);
         // Initialize the binary image to black
         MbufClear(outputImage, 0);
@@ -170,10 +170,9 @@ void TemplateMatcher::findModels(const MIL_ID& inputImage,MIL_ID& outputImage)
     } else {
         std::cout << "No models found.\n";
     }
-    MbufFree(input_image_uint8);
 }
 
-std::vector<std::string> splitString(const std::string& str, char delimiter) {
+std::vector<std::string> splitString(const std::string& str, const char delimiter) {
     std::vector<std::string> tokens;
     std::stringstream ss(str);
     std::string item;
@@ -246,21 +245,32 @@ void TemplateMatcher::FindTemplates( const MIL_ID& inputImage, MIL_ID& outputIma
     this -> findModels(inputImage,outputImage);
 }
 
-void TemplateMatcher::predict(const MIL_ID &inputImage, MIL_ID &outputImage, const std::map<std::string, int> &params) {
-    MIL_ID detection_result, detection_resize, output_image_unresize;
+void TemplateMatcher::predict(const MIL_ID &inputImage, MIL_ID &outputImage, const std::map<std::string, int> &params,
+                              const bool do_resize=false) {
+    MIL_ID detection_result;
     pre_process(inputImage, detection_result, params);
-    MbufAlloc2d(MilSystem, MbufInquire(detection_result, M_SIZE_X, M_NULL)/2,
+    if (do_resize) {
+        MIL_ID  detection_resize, output_image_unresize;
+        MbufAlloc2d(MilSystem, MbufInquire(detection_result, M_SIZE_X, M_NULL)/2,
        MbufInquire(detection_result, M_SIZE_Y, M_NULL)/2, 1 + M_UNSIGNED,
        M_IMAGE + M_PROC, &detection_resize);
-    MimResize(detection_result,detection_resize,0.5,0.5,M_DEFAULT);
-    this->FindTemplates(detection_resize,output_image_unresize, params);
-    MbufAlloc2d(MilSystem, MbufInquire(detection_result, M_SIZE_X, M_NULL),
-       MbufInquire(detection_result, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
-       M_IMAGE + M_PROC, &outputImage);
-    MimResize(output_image_unresize,outputImage,2,2,M_DEFAULT);
-    MbufFree(detection_result);
-    MbufFree(detection_resize);
-    MbufFree(output_image_unresize);
+        MimResize(detection_result,detection_resize,0.5,0.5,M_DEFAULT);
+        this->FindTemplates(detection_resize,output_image_unresize, params);
+        MbufAlloc2d(MilSystem, MbufInquire(detection_result, M_SIZE_X, M_NULL),
+           MbufInquire(detection_result, M_SIZE_Y, M_NULL), 1 + M_UNSIGNED,
+           M_IMAGE + M_PROC, &outputImage);
+        MimResize(output_image_unresize,outputImage,2,2,M_DEFAULT);
+        MbufFree(detection_result);
+        MbufFree(detection_resize);
+        MbufFree(output_image_unresize);
+    }
+    else
+        {
+        this->FindTemplates(detection_result,outputImage, params);
+        MbufFree(detection_result);
+        }
+
+
 }
 
 

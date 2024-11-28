@@ -18,7 +18,7 @@
 #define IMAGE_DIR MIL_TEXT(".\\test_imgs\\cotton_image_new") // 文件夹路径
 
 #define run_high_sat true;
-#define run_templating true;
+#define run_templating false;
 #define run_deep_learning true;
 
 MIL_ID MilApplication, MilSystem, MilDisplay;
@@ -36,7 +36,7 @@ cv::Mat overlayResultOnInput(const cv::Mat& cv_input, const cv::Mat& total_resul
     // 2. 确保 cv_input 是三通道图像（如果是灰度图像，则转换为 BGR）
     cv::Mat cv_input_rgb;
     if (cv_input.channels() == 1) {
-        cv::cvtColor(cv_input, cv_input_rgb, cv::COLOR_GRAY2BGR);
+        cv::cvtColor(cv_input, cv_input_rgb, cv::COLORMAP_WINTER);
     } else {
         cv_input_rgb = cv_input.clone(); // 保证不修改原始图像
     }
@@ -62,7 +62,7 @@ int main() {
     read_params_from_file("..\\config\\template_color_config.txt", params);
 
 #if run_templating
-    TemplateMatcher matcher(MilSystem, MilDisplay, params);
+    TemplateMatcher matcher(params);
     matcher.LoadConfig("..\\config\\template_config.txt");
 #endif
 
@@ -92,8 +92,6 @@ int main() {
             // 艳丽色彩检测
 #if run_high_sat
             high_sat_detect(MilImage, MilHighSatResult, params);
-            MIL_ID MilHighSatUint8 = convert_to_uint8(MilHighSatResult);
-            // MdispSelect(MilDisplay, MilHighSatUint8);
             high_sat_result = mil2mat(MilHighSatResult);
             timer1.printElapsedTime("High Sat finished");
 #else
@@ -102,7 +100,7 @@ int main() {
 
 #if run_templating
             // 模板匹配检测
-            matcher.predict(MilImage, MilTemplateMatchingResult, params);
+            matcher.predict(MilImage, MilTemplateMatchingResult, params, false);
             template_result = mil2mat(MilTemplateMatchingResult);
             timer1.printElapsedTime("Template Matching finished");
 #else
@@ -145,10 +143,6 @@ int main() {
             MbufFree(MilTemplateMatchingResult);
         }
     }
-
-#if run_templating
-    matcher.~TemplateMatcher();
-#endif
     MappFreeDefault(MilApplication, MilSystem, MilDisplay, M_NULL, M_NULL);
     return 0;
 }

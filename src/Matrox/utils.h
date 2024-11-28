@@ -35,12 +35,13 @@ std::vector<int> psLabToOpenCVLab(const std::vector<int>& lab_ps);
 
 std::vector<int> opencvLabToPsLab(const std::vector<int>& lab_cv);
 
-MIL_ID convert_to_uint8(MIL_ID input_img);
+void convert_to_uint8(const MIL_ID& input_img, MIL_ID& output_img);
 
 std::wstring convert_to_wstring(const std::string& str);
+
 void read_params_from_file(const std::string& filename, std::map<std::string, int>& params) ;
+
 cv::Mat mil2mat(MIL_ID mil_img);
-void processImage(cv::Mat& img);
 
 std::unordered_map<std::string, int> loadConfig(const std::string& filename);
 

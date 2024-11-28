@@ -57,9 +57,7 @@ vector<int> opencvLabToPsLab(const vector<int>& lab_cv) {
     return {l_ps, a_ps, b_ps};
 }
 
-MIL_ID convert_to_uint8(MIL_ID input_img) {
-    MIL_ID output_img;
-    MIL_ID MilSystem = MbufInquire(input_img, M_OWNER_SYSTEM, M_NULL);
+void convert_to_uint8(const MIL_ID& input_img, MIL_ID& output_img) {
     MIL_INT size_x = MbufInquire(input_img, M_SIZE_X, M_NULL);
     MIL_INT size_y = MbufInquire(input_img, M_SIZE_Y, M_NULL);
     MIL_INT channel_num = MbufInquire(input_img,  M_SIZE_BAND, M_NULL);
@@ -74,7 +72,6 @@ MIL_ID convert_to_uint8(MIL_ID input_img) {
     } else {
         cout << "Unsupported channel number!" << endl;
     }
-    return output_img;
 }
 
 
@@ -182,7 +179,7 @@ Mat mil2mat(const MIL_ID mil_img) {
         Mat grayImage(height, width, CV_8UC1);
         if (bitDepth == 1) {
             MIL_ID temp_img;
-            temp_img = convert_to_uint8(mil_img);
+            convert_to_uint8(mil_img, temp_img);
             MbufGet(temp_img, grayImage.data);
             MbufFree(temp_img);
         } else {
