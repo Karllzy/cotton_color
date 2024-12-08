@@ -9,7 +9,7 @@
 #include"Matrox/mask.h"
 
 #include"mil.h"
-#define Image_PATH3 MIL_TEXT("C:\\Users\\zjc\\Desktop\\mask_1.png")
+#define Image_PATH3 MIL_TEXT("C:\\Users\\zjc\\Desktop\\mask_5.png")
 MIL_ID MilApplication, MilSystem, MilDisplay;
 
 int main() {
@@ -30,7 +30,7 @@ int main() {
     int widthBlocks = 24;
     int heightBlocks = 1024;
     int threshold = 20;
-    int rowRange = 50;     // 后续50行设置为1
+    int rowRange = 50;     // 后续50行设置为
 
     // 生成掩膜
     std::vector<std::vector<uint8_t>> mask = generateMaskFromImage(MilImage, widthBlocks, heightBlocks, threshold, rowRange);

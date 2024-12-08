@@ -55,15 +55,18 @@ std::vector<std::vector<uint8_t>> generateMaskFromImage(const MIL_ID& inputImage
 
     // 遍历每一列，处理规则：当某列出现第一个1时，将其后rowRange行全部置为255
     for (int j = 0; j < widthBlocks; ++j) {
-        bool marked = false;  // 标记当前列是否已经处理过第一个1
-
-        for (int i = 0; i < heightBlocks; ++i) {
-            if (mask[i][j] == 1&& !marked) {
+        int i = 0;
+        while (i < heightBlocks) {
+            if (mask[i][j] == 1) {
                 // 找到第一个1，处理后面rowRange行
                 for (int k = i; k < std::min(i + rowRange, heightBlocks); ++k) {
                     mask[k][j] = 1;
                 }
-                marked = true;  // 标记为已处理，后续连续的1不再处理
+                // 跳过已经设置为255的后rowRange行
+                i += rowRange;
+            } else {
+                // 如果当前位置为0，则继续检测下一行
+                ++i;
             }
         }
     }
