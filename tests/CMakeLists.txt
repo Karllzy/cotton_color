@@ -18,7 +18,7 @@ target_link_libraries(test_template_matching Matrox ${OpenCV_LIBS} ${MIL_LIBS})
 add_executable(test_mask
         ${CMAKE_CURRENT_SOURCE_DIR}/test_mask.cpp)
 # 链接 Matrox 模块和依赖库
-target_link_libraries(test_mask Matrox ${OpenCV_LIBS} ${MIL_LIBS})
+target_link_libraries(test_mask Matrox CVDL ${OpenCV_LIBS} ${MIL_LIBS})
 
 #测试用例 4：test_onnx
 add_executable(test_onnx

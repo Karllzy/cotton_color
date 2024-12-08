@@ -7,70 +7,114 @@
 
 #include "utils.h"
 
-std::vector<std::vector<uint8_t>> generateMaskFromImage(const MIL_ID& inputImage, int widthBlocks, int heightBlocks, int threshold = 10, int rowRange = 50) {
-    // 读取图像
-    cv::Mat image = mil2mat(inputImage);
-    //
-    // // 检查图像是否成功读取
-    // if (image.empty()) {
-    //     std::cerr << "无法加载图像，请检查路径是否正确: " << imagePath << std::endl;
-    //     exit(EXIT_FAILURE);
-    // }
+#include <opencv2/opencv.hpp>
+#include <iostream>
+#include <vector>
+using namespace std;
 
-    // 确保图像是二值化的
+// Function to convert an image into a mask based on sizeThreshold
+vector<vector<uint8_t>> generateMask(
+    const MIL_ID& inputImg,
+    int outputWidth,
+    int outputHeight,
+    int sizeThreshold
+) {
+    cv::Mat image = mil2mat(inputImg);
+
+    // Ensure the image is binary
     cv::threshold(image, image, 128, 255, cv::THRESH_BINARY);
 
-    // 获取图像的宽度和高度
     int imageWidth = image.cols;
     int imageHeight = image.rows;
 
-    // 计算每个块的宽度和高度
-    int blockWidth = imageWidth / widthBlocks;
-    int blockHeight = imageHeight / heightBlocks;
+    int blockWidth = imageWidth / outputWidth;
+    int blockHeight = imageHeight / outputHeight;
 
-    // 创建掩膜矩阵 (uint8_t 类型)
-    std::vector<std::vector<uint8_t>> mask(heightBlocks, std::vector<uint8_t>(widthBlocks, 0));
+    vector<vector<uint8_t>> mask(outputHeight, vector<uint8_t>(outputWidth, 0));
 
-    // 遍历每个块并统计白色像素点的数量
-    for (int i = 0; i < heightBlocks; ++i) {
-        for (int j = 0; j < widthBlocks; ++j) {
-            // 计算块的起始和结束位置
+    for (int i = 0; i < outputHeight; ++i) {
+        for (int j = 0; j < outputWidth; ++j) {
             int x_start = j * blockWidth;
             int y_start = i * blockHeight;
-            int x_end = (j == widthBlocks - 1) ? imageWidth : (j + 1) * blockWidth;
-            int y_end = (i == heightBlocks - 1) ? imageHeight : (i + 1) * blockHeight;
+            int x_end = (j == outputWidth - 1) ? imageWidth : (j + 1) * blockWidth;
+            int y_end = (i == outputHeight - 1) ? imageHeight : (i + 1) * blockHeight;
 
-            // 提取当前块
             cv::Mat block = image(cv::Rect(x_start, y_start, x_end - x_start, y_end - y_start));
 
-            // 统计块中白色像素的数量
             int whitePixelCount = cv::countNonZero(block);
 
-            // 如果白色像素数大于阈值，将该块标记为 255
-            if (whitePixelCount > threshold) {
+            if (whitePixelCount > sizeThreshold) {
                 mask[i][j] = 1;
             }
         }
     }
 
-    // 遍历每一列，处理规则：当某列出现第一个1时，将其后rowRange行全部置为255
-    for (int j = 0; j < widthBlocks; ++j) {
-        int i = 0;
-        while (i < heightBlocks) {
-            if (mask[i][j] == 1) {
-                // 找到第一个1，处理后面rowRange行
-                for (int k = i; k < std::min(i + rowRange, heightBlocks); ++k) {
-                    mask[k][j] = 1;
-                }
-                // 跳过已经设置为255的后rowRange行
-                i += rowRange;
-            } else {
-                // 如果当前位置为0，则继续检测下一行
-                ++i;
+    return mask;
+}
+pair<vector<vector<uint8_t>>, vector<vector<uint8_t>>> applyRowRangeDelay(
+    const vector<vector<uint8_t>>& mask,
+    const vector<vector<uint8_t>>& tail,
+    int rowRange
+) {
+    int outputHeight = (int)mask.size();
+    int outputWidth = (int)mask[0].size();
+
+    vector<vector<uint8_t>> mask_after_row_range(outputHeight, vector<uint8_t>(outputWidth, 0));
+    vector<vector<uint8_t>> newTail(rowRange, vector<uint8_t>(outputWidth, 0));
+
+    // 先将旧的 tail 映射到 mask_after_row_range 的顶部几行
+    for (int i = 0; i < (int)tail.size(); ++i) {
+        for (int j = 0; j < outputWidth; ++j) {
+            if (i < outputHeight) {
+                mask_after_row_range[i][j] = max(mask_after_row_range[i][j], tail[i][j]);
             }
         }
     }
 
-    return mask;
+    // 对当前 mask 应用 rowRange 的拖影效果
+    for (int j = 0; j < outputWidth; ++j) {
+        for (int i = 0; i < outputHeight; ++i) {
+            if (mask[i][j] == 1) {
+                // 从当前行 i 开始，向下扩展 rowRange 行
+                int end_line = i + rowRange - 1;
+
+                // 先处理仍在 mask 范围内的部分
+                int inside_mask_end = min(end_line, outputHeight - 1);
+                for (int line = i; line <= inside_mask_end; ++line) {
+                    mask_after_row_range[line][j] = 1;
+                }
+
+                // 超出 mask 范围的行进入 tail
+                if (end_line >= outputHeight) {
+                    // 从 outputHeight 行开始的部分属于 tail
+                    for (int line = outputHeight; line <= end_line; ++line) {
+                        int tail_line_idx = line - outputHeight;
+                        if (tail_line_idx >= 0 && tail_line_idx < (int)newTail.size()) {
+                            newTail[tail_line_idx][j] = 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return {mask_after_row_range, newTail};
+}
+
+
+// Updated wrapper function
+pair<vector<vector<uint8_t>>, vector<vector<uint8_t>>> generateMaskWithTail(
+    const MIL_ID& inputImg,
+    const vector<vector<uint8_t>>& tail,
+    int outputWidth,
+    int outputHeight,
+    int sizeThreshold = 10,
+    int rowRange = 50
+) {
+    // Generate the mask from the image
+    vector<vector<uint8_t>> mask = generateMask(inputImg, outputWidth, outputHeight, sizeThreshold);
+
+    // Apply rowRange delay
+    return applyRowRangeDelay(mask, tail, rowRange);
 }
 

@@ -10,7 +10,16 @@
 #include <vector>
 #include"mil.h"
 #include <iostream>
+using namespace std;
 
 
-std::vector<std::vector<uint8_t>> generateMaskFromImage(const MIL_ID& inputImage, int widthBlocks, int heightBlocks, int threshold , int rowRange) ;
+pair<vector<vector<uint8_t>>, vector<vector<uint8_t>>> generateMaskWithTail(
+    const MIL_ID& inputImg,
+    const vector<vector<uint8_t>>& tail,
+    int outputWidth,
+    int outputHeight,
+    int sizeThreshold,
+    int rowRange
+);
+
 #endif //MASK_H
