@@ -366,3 +366,6 @@ FodyWeavers.xsd
 cmake-build-*
 
 .DS_Store
+
+tests/runs/*
+
