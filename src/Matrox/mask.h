@@ -8,9 +8,9 @@
 
 #include <opencv2/opencv.hpp>
 #include <vector>
+#include"mil.h"
 #include <iostream>
 
-std::vector<std::vector<bool>> generateMaskFromImage(const std::string& imagePath, int widthBlocks, int heightBlocks, int threshold);
 
-
+std::vector<std::vector<uint8_t>> generateMaskFromImage(const MIL_ID& inputImage, int widthBlocks, int heightBlocks, int threshold , int rowRange) ;
 #endif //MASK_H

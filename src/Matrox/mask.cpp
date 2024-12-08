@@ -1,15 +1,21 @@
 
 #include "mask.h"
 // 读取二值化的单通道一位图片并生成掩膜
-std::vector<std::vector<bool>> generateMaskFromImage(const std::string& imagePath, int widthBlocks, int heightBlocks, int threshold = 10) {
-    // 读取图像
-    cv::Mat image = cv::imread(imagePath, cv::IMREAD_GRAYSCALE);
+#include <opencv2/opencv.hpp>
+#include <iostream>
+#include <vector>
 
-    // 检查图像是否成功读取
-    if (image.empty()) {
-        std::cerr << "无法加载图像，请检查路径是否正确: " << imagePath << std::endl;
-        exit(EXIT_FAILURE);
-    }
+#include "utils.h"
+
+std::vector<std::vector<uint8_t>> generateMaskFromImage(const MIL_ID& inputImage, int widthBlocks, int heightBlocks, int threshold = 10, int rowRange = 50) {
+    // 读取图像
+    cv::Mat image = mil2mat(inputImage);
+    //
+    // // 检查图像是否成功读取
+    // if (image.empty()) {
+    //     std::cerr << "无法加载图像，请检查路径是否正确: " << imagePath << std::endl;
+    //     exit(EXIT_FAILURE);
+    // }
 
     // 确保图像是二值化的
     cv::threshold(image, image, 128, 255, cv::THRESH_BINARY);
@@ -22,8 +28,8 @@ std::vector<std::vector<bool>> generateMaskFromImage(const std::string& imagePat
     int blockWidth = imageWidth / widthBlocks;
     int blockHeight = imageHeight / heightBlocks;
 
-    // 创建掩膜矩阵
-    std::vector<std::vector<bool>> mask(heightBlocks, std::vector<bool>(widthBlocks, false));
+    // 创建掩膜矩阵 (uint8_t 类型)
+    std::vector<std::vector<uint8_t>> mask(heightBlocks, std::vector<uint8_t>(widthBlocks, 0));
 
     // 遍历每个块并统计白色像素点的数量
     for (int i = 0; i < heightBlocks; ++i) {
@@ -40,14 +46,28 @@ std::vector<std::vector<bool>> generateMaskFromImage(const std::string& imagePat
             // 统计块中白色像素的数量
             int whitePixelCount = cv::countNonZero(block);
 
-            // 如果白色像素数大于阈值，将该块标记为 true
+            // 如果白色像素数大于阈值，将该块标记为 255
             if (whitePixelCount > threshold) {
-                mask[i][j] = true;
+                mask[i][j] = 1;
+            }
+        }
+    }
+
+    // 遍历每一列，处理规则：当某列出现第一个1时，将其后rowRange行全部置为255
+    for (int j = 0; j < widthBlocks; ++j) {
+        bool marked = false;  // 标记当前列是否已经处理过第一个1
+
+        for (int i = 0; i < heightBlocks; ++i) {
+            if (mask[i][j] == 1&& !marked) {
+                // 找到第一个1，处理后面rowRange行
+                for (int k = i; k < std::min(i + rowRange, heightBlocks); ++k) {
+                    mask[k][j] = 1;
+                }
+                marked = true;  // 标记为已处理，后续连续的1不再处理
             }
         }
     }
 
     return mask;
 }
-
 
