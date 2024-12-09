@@ -67,7 +67,7 @@ int main() {
     Timer timer1, timer2;
     std::map<std::string, int> params;
     read_params_from_file("C:\\Users\\ZLSDKJ\\Desktop\\color_range_config.txt", params);
-    // read_params_from_file("..\\config\\template_color_config.txt", params);
+    read_params_from_file("..\\config\\template_color_config.txt", params);
     MIL_ID MilImage = M_NULL, MilHighSatResult = M_NULL, MilTemplateMatchingResult = M_NULL;
     MbufRestore(IMAGE_DIR, MilSystem, &MilImage);
     const int iterations_per_thread = 500;

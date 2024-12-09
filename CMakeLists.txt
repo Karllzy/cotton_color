@@ -18,25 +18,25 @@ find_package(OpenCV REQUIRED)
 # 包含 OpenCV 头文件路径
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-# 设置 Qt 路径
-if(DEFINED ENV{Qt6_DIR})
-    set(Qt6_DIR ENV{Qt6_DIR})
-    message(STATUS "Qt6_DIR set from environment variable: ${Qt6_DIR}")
-else()
-    message(FATAL_ERROR "Qt6_DIR is not set. Please set the Qt6_DIR environment variable.")
-endif()
-# 查找 Qt6 包
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
-# 自动处理 MOC、UIC、RCC
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTORCC ON)
+## 设置 Qt 路径
+#if(DEFINED ENV{Qt6_DIR})
+#    set(Qt6_DIR ENV{Qt6_DIR})
+#    message(STATUS "Qt6_DIR set from environment variable: ${Qt6_DIR}")
+#else()
+#    message(FATAL_ERROR "Qt6_DIR is not set. Please set the Qt6_DIR environment variable.")
+#endif()
+## 查找 Qt6 包
+#find_package(Qt6 REQUIRED COMPONENTS Widgets)
+## 自动处理 MOC、UIC、RCC
+#set(CMAKE_AUTOMOC ON)
+#set(CMAKE_AUTOUIC ON)
+#set(CMAKE_AUTORCC ON)
 
 #配置mil库
-include_directories(E:/QTexamble/matrox/Include)
+include_directories("C:/Program Files/Matrox Imaging/MIL/Include")
 # 添加 MIL 库的库文件路径
-link_directories(E:/QTexamble/matrox/LIB)
-file(GLOB MIL_LIBS E:/QTexamble/matrox/LIB/*.lib)
+link_directories("C:/Program Files/Matrox Imaging/MIL/LIB")
+file(GLOB MIL_LIBS "C:/Program Files/Matrox Imaging/MIL/LIB/*.lib")
 
 
 # 添加子目录
@@ -46,5 +46,5 @@ add_subdirectory(tests)
 
 add_executable(opencv_onnx opencv_onnx.cpp)
 # 链接 OpenCV 和 Qt 库
-target_link_libraries(opencv_onnx Qt6::Widgets ${OpenCV_LIBS} comdlg32)
+target_link_libraries(opencv_onnx ${OpenCV_LIBS} comdlg32)
 
