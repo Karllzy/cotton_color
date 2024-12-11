@@ -59,7 +59,7 @@ m. 模式切换：测下一个喷阀还是重发？
 
     @staticmethod
     def cmd_padding(cmd):
-        return b'\xAA' + cmd + b'\xFF\xFF\xBB'
+        return b'\xAA' + cmd + b'\xFF\xFF\xBB'   #起始结束位置
 
     @staticmethod
     def param_cmd_parser(cmd, default_value, checker=None):
@@ -179,9 +179,9 @@ m. 模式切换：测下一个喷阀还是重发？
     def send(self, cmd: bytes) -> None:
         cmd = self.cmd_padding(cmd)
         print("我要 send 这个了:")
-        print(cmd.hex())
+        print(cmd.hex())  #16
         try:
-            self.c.send(cmd)
+            self.c.send(cmd)  #发送至客户端
         except Exception as e:
             print(f"发失败了, 这是我找到的错误信息:\n{e}")
             return
@@ -213,7 +213,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='阀门测程序')
     parser.add_argument('-c', default=False, action='store_true', help='是否是开个客户端', required=False)
-    parser.add_argument('-m', default='192.168.10.8', help='指定master主机名')
+    parser.add_argument('-m', default='127.0.0.1', help='指定master主机名')
     parser.add_argument('-p', default=13452, help='指定端口')
     parser.add_argument('-cnt', default=64, help='指定端口')
     args = parser.parse_args()
